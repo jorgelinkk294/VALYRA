@@ -1,129 +1,130 @@
-const CACHE = 'valyra-4.0.1'; // sube este numero junto con APP_VERSION en index.html
-const LOCAL = ['./', 'index.html', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
-const REMOTE = ['https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
+const CACHE = 'valyra-4.1.0';
+const LOCAL = ['./', 'index.html', 'enhancements.js', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
+const REMOTE = [
+  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'
+];
+const WATCH = ['index.html', 'manifest.webmanifest', 'logo.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     await cache.addAll(LOCAL);
     await Promise.all(REMOTE.map(async url => {
-      try { await cache.put(url, await fetch(url, { mode: 'no-cors' })); } catch (e) {}
+      try { await cache.put(url, await fetch(url, { mode: 'no-cors' })); } catch (error) {}
     }));
-    self.skipWaiting();
+    await self.skipWaiting();
   })());
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)));
     await self.clients.claim();
   })());
 });
 
-// Sirve lo guardado y actualiza en segundo plano cuando hay internet.
+function isAppPage(request) {
+  const url = new URL(request.url);
+  return url.origin === self.location.origin &&
+    (request.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/'));
+}
+
+async function addEnhancements(response) {
+  if (!response || response.type === 'opaque') return response;
+  const html = await response.text();
+  if (html.includes('enhancements.js')) return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+  const updated = html.replace(/<\/body\s*>/i, '<script src="./enhancements.js"></script></body>');
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  return new Response(updated, { status: response.status, statusText: response.statusText, headers });
+}
+
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  if (new URL(event.request.url).searchParams.has('chk')) return; // revision de version: siempre a la red
+  if (event.request.method !== 'GET' || new URL(event.request.url).searchParams.has('chk')) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const cached = await cache.match(event.request, { ignoreSearch: true });
-    const network = fetch(event.request).then(res => {
-      if (res && (res.ok || res.type === 'opaque')) cache.put(event.request, res.clone());
-      return res;
+    const cached = await cache.match(event.request, { ignoreSearch: true }) ||
+      (event.request.mode === 'navigate' ? await cache.match('index.html') : null);
+    const network = fetch(event.request).then(response => {
+      if (response && (response.ok || response.type === 'opaque')) cache.put(event.request, response.clone());
+      return response;
     }).catch(() => null);
-    if (cached) { event.waitUntil(network); return cached; }
-    const res = await network;
-    if (res) return res;
-    if (event.request.mode === 'navigate') return cache.match('index.html');
+    if (cached) {
+      event.waitUntil(network);
+      return isAppPage(event.request) ? addEnhancements(cached) : cached;
+    }
+    const response = await network;
+    if (response) return isAppPage(event.request) ? addEnhancements(response) : response;
+    if (event.request.mode === 'navigate') {
+      const fallback = await cache.match('index.html');
+      return addEnhancements(fallback);
+    }
     return Response.error();
   })());
 });
 
-
-// ---------- Aviso de actualizacion cuando la app no se esta usando ----------
-const WATCH = ['index.html', 'manifest.webmanifest', 'logo.png'];
-
-function idbOpen() {
-  return new Promise((resolve, reject) => {
-    const r = indexedDB.open('valyra', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('kv');
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
-}
-async function idbGet(key) {
+// The standalone app performs its foreground update check; retain background
+// notifications for installed PWAs when periodic background sync is available.
+async function idbValue(key) {
   try {
-    const db = await idbOpen();
-    return await new Promise(res => {
-      const q = db.transaction('kv').objectStore('kv').get(key);
-      q.onsuccess = () => res(q.result === undefined ? null : q.result);
-      q.onerror = () => res(null);
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('valyra', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('kv');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
     });
-  } catch (e) { return null; }
-}
-async function idbSet(key, val) {
-  try {
-    const db = await idbOpen();
-    await new Promise(res => {
-      const tx = db.transaction('kv', 'readwrite');
-      tx.objectStore('kv').put(val, key);
-      tx.oncomplete = tx.onerror = tx.onabort = res;
+    return await new Promise(resolve => {
+      const request = db.transaction('kv').objectStore('kv').get(key);
+      request.onsuccess = () => resolve(request.result ?? null);
+      request.onerror = () => resolve(null);
     });
-  } catch (e) {}
+  } catch (error) { return null; }
 }
 
-// Misma huella que calcula la app (SHA-256 de los archivos en el mismo orden)
-async function buildHash() {
-  const parts = await Promise.all(WATCH.map(async f => {
-    const r = await fetch(f + '?chk=1', { cache: 'no-cache' });
-    if (!r.ok) throw new Error(f);
-    return new Uint8Array(await r.arrayBuffer());
+async function currentBuildHash() {
+  const parts = await Promise.all(WATCH.map(async file => {
+    const response = await fetch(file + '?chk=1', { cache: 'no-cache' });
+    if (!response.ok) throw new Error(file);
+    return new Uint8Array(await response.arrayBuffer());
   }));
-  const all = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
-  let off = 0;
-  parts.forEach(p => { all.set(p, off); off += p.length; });
-  const d = await crypto.subtle.digest('SHA-256', all);
-  return Array.from(new Uint8Array(d)).map(x => x.toString(16).padStart(2, '0')).join('');
+  const bytes = new Uint8Array(parts.reduce((total, part) => total + part.length, 0));
+  let offset = 0;
+  parts.forEach(part => { bytes.set(part, offset); offset += part.length; });
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map(value => value.toString(16).padStart(2, '0')).join('');
 }
 
 async function checkUpdateInBackground() {
   try {
-    if (Notification.permission !== 'granted') return;
-    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    if (wins.some(c => c.visibilityState === 'visible')) return;   // la est\u00e1n usando: ah\u00ed sale la ventana
-    const saved = await idbGet('__build');
-    if (!saved) return;
-    const h = await buildHash();
-    if (h === saved) return;
-    if ((await idbGet('__notified')) === h) return;                 // ya se avis\u00f3 de esta versi\u00f3n
-    await idbSet('__notified', h);
-    await self.registration.showNotification('Actualizaci\u00f3n disponible', {
-      body: 'Hay una versi\u00f3n nueva de VALYRA. Abre la app para actualizar.',
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
-      tag: 'valyra-update',
-      renotify: true,
-      silent: false,
-      vibrate: [200, 100, 200],
+    if (!('Notification' in self) || Notification.permission !== 'granted') return;
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (windows.some(client => client.visibilityState === 'visible')) return;
+    const saved = await idbValue('__build');
+    if (!saved || await currentBuildHash() === saved) return;
+    const registration = await self.registration;
+    await registration.showNotification('Actualización disponible', {
+      body: 'Hay una versión nueva de VALYRA. Abre la app para actualizar.',
+      icon: 'icon-192.png', badge: 'icon-192.png', tag: 'valyra-update', renotify: true,
       data: { url: './' }
     });
-  } catch (e) {}
+  } catch (error) {}
 }
 
 self.addEventListener('periodicsync', event => {
   if (event.tag === 'valyra-update-check') event.waitUntil(checkUpdateInBackground());
 });
-
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'check-update') event.waitUntil(checkUpdateInBackground());
 });
-
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil((async () => {
-    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of wins) { if ('focus' in c) return c.focus(); }
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) if ('focus' in client) return client.focus();
     return self.clients.openWindow('./');
   })());
 });
