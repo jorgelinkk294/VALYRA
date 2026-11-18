@@ -1,4 +1,4 @@
-const CACHE = 'valyra-4.1.1';
+const CACHE = 'valyra-4.1.2';
 const LOCAL = ['./', 'index.html', 'enhancements.js', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
 const REMOTE = [
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
@@ -38,7 +38,8 @@ async function addEnhancements(response) {
   if (html.includes('enhancements.js')) {
     return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
   }
-  const updated = html.replace(/<\/body\s*>/i, '<script src="./enhancements.js"></script></body>');
+  const at = html.toLowerCase().lastIndexOf('</body>');
+  const updated = at < 0 ? html : html.slice(0, at) + '<script src="./enhancements.js"></script>' + html.slice(at);
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');

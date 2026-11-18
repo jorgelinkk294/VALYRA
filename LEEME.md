@@ -1,4 +1,4 @@
-# VALYRA v4.0.1 - GitHub Pages y PWABuilder
+# VALYRA v4.1.1 - GitHub Pages y PWABuilder
 
 ## Que archivos hay
 - `index.html`: la app completa (estilos, almacenamiento y codigo estan dentro). Es lo unico que hay que editar.
