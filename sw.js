@@ -1,18 +1,28 @@
-const CACHE = 'valyra-4.1.2';
-const LOCAL = ['./', 'index.html', 'enhancements.js', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
-const REMOTE = [
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'
+importScripts('version.js');                       // define VALYRA_VERSION y VALYRA_WATCH
+
+const CACHE = 'valyra-' + self.VALYRA_VERSION;
+const LOCAL = [
+  './', 'index.html', 'styles.css', 'storage.js', 'app.js', 'enhancements.js', 'version.js',
+  'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'
 ];
-const WATCH = ['index.html', 'manifest.webmanifest', 'logo.png'];
+// Librerias: se prefiere la copia local (vendor/); si no existe, se usa el CDN.
+const LIBS = [
+  ['vendor/html2pdf.bundle.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'],
+  ['vendor/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js'],
+  ['vendor/exceljs.min.js', 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js']
+];
+const WATCH = self.VALYRA_WATCH;
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     await cache.addAll(LOCAL);
-    await Promise.all(REMOTE.map(async url => {
-      try { await cache.put(url, await fetch(url, { mode: 'no-cors' })); } catch (error) {}
+    await Promise.all(LIBS.map(async ([local, remote]) => {
+      try {
+        const res = await fetch(local, { cache: 'no-cache' });
+        if (res.ok) { await cache.put(local, res); return; }
+      } catch (error) {}
+      try { await cache.put(remote, await fetch(remote, { mode: 'no-cors' })); } catch (error) {}
     }));
     await self.skipWaiting();
   })());

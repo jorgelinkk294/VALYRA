@@ -79,7 +79,7 @@
     // are no longer displayed.
     const legacy = document.createElement('div');
     legacy.className = 'hidden';
-    legacy.innerHTML = '<div id="cliList"></div><div id="clientesList"></div><div id="posList"></div>';
+    legacy.innerHTML = '<input id="cliBuscar"><div id="cliList"></div><div id="clientesList"></div><div id="posList"></div>';
     more.append(legacy);
     const subtitle = more.querySelector('.page-heading p');
     if (subtitle) subtitle.textContent = 'Respaldo y ajustes del negocio.';
