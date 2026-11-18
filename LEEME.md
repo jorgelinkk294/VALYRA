@@ -6,6 +6,7 @@ La versión actual está en `version.js` (es el único lugar donde se cambia).
 - `index.html`: la estructura de la app (pantallas y formularios).
 - `styles.css`: todos los estilos.
 - `storage.js`: guardado de datos en el dispositivo (IndexedDB).
+- `mockups.js`: los mockups 3D (camisa, imágenes, guardado y exportación).
 - `app.js`: el código principal de la app.
 - `enhancements.js`: mejoras (inventario, tallas agrupadas, precios, finanzas).
 - `version.js`: número de versión y lista de archivos que vigila el aviso de actualización.

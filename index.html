@@ -381,12 +381,16 @@
     <section id="tabMock" class="hidden">
       <div class="page-heading">
         <h1>Mockups</h1>
-        <p>Gira la playera en 3D arrastrando el fondo. Arrastra una imagen para moverla (pecho, espalda o mangas) y toca Fijar para dejarla en su lugar.</p>
+        <p>Gira la playera en 3D arrastrando el fondo. Arrastra una imagen para moverla; con dos dedos sobre la imagen cambias su tama&#xF1;o y su giro, y con dos dedos fuera de ella haces zoom. Tu trabajo se conserva solo.</p>
       </div>
 
       <div class="card accent-card">
         <canvas id="mkCanvas" width="600" height="640" style="width:100%;border-radius:14px;background:#eef1f6;touch-action:none"></canvas>
         <div id="mkViews" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
+        <div class="grid-2" style="margin-top:10px">
+          <button id="mkUndoBtn" class="btn btn-light" onclick="mkUndo()" disabled>&#x21B6; Deshacer</button>
+          <button id="mkRedoBtn" class="btn btn-light" onclick="mkRedo()" disabled>&#x21B7; Rehacer</button>
+        </div>
         <div class="field" style="margin-top:10px">
           <span class="field-label">Zoom</span>
           <input id="mkZoom" type="range" min="50" max="300" value="100" oninput="mkSetZoom(this.value)" style="width:100%">
@@ -399,7 +403,7 @@
         <div id="mkColors" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         <div class="grid-2" style="margin-top:12px">
           <button id="mkDropBtn" class="btn btn-light" onclick="mkToggleDropper()">Gotero</button>
-          <button class="btn btn-light" onclick="mkBgColor()">Fondo del dise&#xF1;o</button>
+          <button class="btn btn-light" onclick="mkBgColor()">Usar fondo como color</button>
         </div>
         <div class="field" style="margin-top:10px">
           <span class="field-label">Color personalizado</span>
@@ -419,19 +423,85 @@
         <div class="grid-2" style="margin-top:10px">
           <div class="field">
             <span class="field-label">Ancho de la imagen (cm)</span>
-            <input id="mkAncho" type="number" value="28" min="2" max="60" oninput="mkSetWidth(this.value)" disabled>
+            <input id="mkAncho" type="number" value="28" min="2" max="60" oninput="mkSetWidth(this.value)" class="mk-needs-sel" disabled>
           </div>
           <div class="field">
             <span class="field-label">Giro (grados)</span>
-            <input id="mkRot" type="range" min="-180" max="180" value="0" oninput="mkSetRot(this.value)" style="width:100%" disabled>
+            <input id="mkRot" type="range" min="-180" max="180" value="0" oninput="mkSetRot(this.value)" style="width:100%" class="mk-needs-sel" disabled>
           </div>
         </div>
-        <div class="grid-2" style="margin-top:10px">
-          <button id="mkLockBtn" class="btn btn-light" onclick="mkToggleLock()" disabled>Fijar imagen</button>
-          <button id="mkDelBtn" class="btn btn-light" onclick="mkRemoveSel()" disabled>Quitar imagen</button>
+
+        <div class="section-label" style="margin-top:14px">Colocaci&#xF3;n</div>
+        <div class="grid-2">
+          <button class="btn btn-light mk-needs-sel" onclick="mkCenter()" disabled>Centrar</button>
+          <button id="mkGuideBtn" class="btn btn-light" onclick="mkToggleGuides()">Gu&#xED;as: s&#xED;</button>
         </div>
-        <button class="btn btn-green" onclick="mkExport()">Exportar mockup (PNG)</button>
-        <button class="btn btn-light" onclick="mkClear()">Quitar todas las im&#xE1;genes</button>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Distancia al cuello (cm)</span>
+          <input id="mkNeck" type="number" step="0.5" min="0" max="60" placeholder="Solo pecho y espalda" oninput="mkSetNeck(this.value)" disabled>
+        </div>
+        <p style="margin:6px 0 0;font-size:12px;color:var(--muted)">La gu&#xED;a morada es el centro de la playera y la naranja el cuello. Cerca del centro la imagen se pega sola. Con computadora tambi&#xE9;n puedes mover con las flechas.</p>
+
+        <div class="section-label" style="margin-top:14px">Editar imagen</div>
+        <div class="grid-2">
+          <button class="btn btn-light mk-needs-sel" onclick="mkDuplicate()" disabled>Duplicar</button>
+          <button id="mkLockBtn" class="btn btn-light mk-needs-sel" onclick="mkToggleLock()" disabled>Fijar imagen</button>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <button class="btn btn-light mk-needs-sel" onclick="mkFlip('x')" disabled>Voltear &#x2194;</button>
+          <button class="btn btn-light mk-needs-sel" onclick="mkFlip('y')" disabled>Voltear &#x2195;</button>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <button class="btn btn-light mk-needs-sel" onclick="mkLayer('front')" disabled>Traer al frente</button>
+          <button class="btn btn-light mk-needs-sel" onclick="mkLayer('back')" disabled>Enviar atr&#xE1;s</button>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <button class="btn btn-light mk-needs-sel" onclick="mkLayer('up')" disabled>Subir una capa</button>
+          <button class="btn btn-light mk-needs-sel" onclick="mkLayer('down')" disabled>Bajar una capa</button>
+        </div>
+
+        <div class="section-label" style="margin-top:14px">Quitar fondo</div>
+        <button id="mkBgBtn" class="btn btn-light mk-needs-sel" onclick="mkToggleBg()" disabled>Quitar fondo</button>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Tolerancia (sube si quedan restos del fondo)</span>
+          <input id="mkTol" type="range" min="2" max="60" value="20" oninput="mkBgChange()" style="width:100%" class="mk-needs-sel" disabled>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px">
+          <input id="mkInner" type="checkbox" onchange="mkBgChange()" class="mk-needs-sel" disabled style="width:auto">
+          Quitar tambi&#xE9;n ese color dentro del dise&#xF1;o
+        </label>
+
+        <div class="grid-2" style="margin-top:14px">
+          <button id="mkDelBtn" class="btn btn-light mk-needs-sel" onclick="mkRemoveSel()" disabled>Quitar imagen</button>
+          <button class="btn btn-light" onclick="mkClear()">Quitar todas</button>
+        </div>
+      </div>
+
+      <div class="section-label">Guardar y enviar</div>
+      <div class="card">
+        <p id="mkCurLabel" style="margin:0 0 10px;font-size:12px;color:var(--muted)"></p>
+        <div class="grid-2">
+          <div class="field"><span class="field-label">Nombre del mockup</span><input id="mkName" placeholder="Ej. Logo en pecho" oninput="mkMetaChange()"></div>
+          <div class="field"><span class="field-label">Cliente</span><input id="mkCliente" placeholder="Cliente" list="clientesList" oninput="mkMetaChange('cliente')"></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Cotizaci&#xF3;n (opcional)</span>
+          <select id="mkCot" onchange="mkMetaChange('cot')"></select>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <button class="btn btn-primary" onclick="mkSave()">Guardar mockup</button>
+          <button class="btn btn-light" onclick="mkSave(true)">Guardar como copia</button>
+        </div>
+        <button class="btn btn-green" onclick="mkExportAll('pdf')">Enviar todas las vistas (PDF)</button>
+        <button class="btn btn-green" onclick="mkExportAll('png')">Enviar todas las vistas (imagen)</button>
+        <button class="btn btn-light" onclick="mkExport()">Exportar solo esta vista (PNG)</button>
+        <button class="btn btn-light" onclick="mkNew()">Mockup nuevo</button>
+      </div>
+
+      <div class="section-label">Mockups guardados</div>
+      <div class="card">
+        <input id="mkSearch" placeholder="Buscar por nombre o cliente" oninput="mkRenderSaved()">
+        <div id="mkSaved"></div>
       </div>
     </section>
     <section id="tabMas" class="hidden">
@@ -603,7 +673,7 @@ storeReady.then(function () {
     };
     document.body.appendChild(s);
   }
-  load('app.js', function () { load('enhancements.js'); });
+  load('mockups.js', function () { load('app.js', function () { load('enhancements.js'); }); });
 });
 </script>
 
