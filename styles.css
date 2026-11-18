@@ -726,17 +726,46 @@
     .modal-box { border-radius: 26px; }
     body:not(.dark) .page-heading h1 { color: #1b1840; }
     body:not(.dark) .section-label { color: #5b5880; }
-    #splash { position: fixed; inset: 0; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; color: #1b1840; transition: opacity .5s ease; }
+    #splash { position: fixed; inset: 0; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; color: #1b1840; overflow: hidden; transition: opacity .5s ease; }
     #splash.out { opacity: 0; pointer-events: none; }
-    #splash img { display: block; width: 190px; height: auto; animation: splashIn .7s ease both; }
+    #splashLogo { display: none; }
     #splash p { margin: 18px 0 10px; font-size: 14px; font-weight: 700; color: #5b5880; }
     .splash-box { display: flex; flex-direction: column; align-items: center; }
     .splash-bar { width: 150px; height: 5px; overflow: hidden; border-radius: 99px; background: #e8e4ff; }
-    .splash-bar span { display: block; height: 100%; border-radius: 99px; background: #6d5dfc; animation: splashBar 2.2s ease-out both; }
+    .splash-bar span { display: block; height: 100%; border-radius: 99px; background: #6d5dfc; animation: splashBar 4.4s cubic-bezier(.25,.6,.3,1) both; }
     .splash-foot { position: absolute; bottom: 46px; font-size: 13px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: #5a45e8; }
-    @keyframes splashIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
     @keyframes splashBar { from { width: 0; } to { width: 100%; } }
-    @media (prefers-reduced-motion: reduce) { #splash img, .splash-bar span { animation: none; } }
+
+    /* Logo animado: el buho llega volando, se posa en la luna y se colorea */
+    .sl-stage { position: relative; width: min(66vw, 280px); aspect-ratio: 768 / 744; }
+    .sl-layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .sl-glow { position: absolute; left: 62%; top: 31%; width: 46%; aspect-ratio: 1; margin: -23% 0 0 -23%; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,214,110,.75) 0%, rgba(255,214,110,.32) 42%, rgba(255,214,110,0) 70%);
+      opacity: 0; animation: slGlow 1.6s ease-out 3s both; }
+    .sl-base { animation: slFade .6s ease-out both; }
+    .sl-moon { transform-origin: 62% 30%; animation: slMoon .9s cubic-bezier(.2,.8,.3,1) .3s both; }
+    .sl-owl { position: absolute; inset: 0; transform-origin: 50% 80%; animation: slFly 2.4s ease-in-out .7s both; }
+    .sl-flap { position: absolute; inset: 0; transform-origin: 50% 92%; animation: slFlap .3s ease-in-out .7s 6, slSettle .45s ease-out 3.05s both; }
+    .sl-color { animation: slColor 1.2s ease-out 3.15s both; }
+    @keyframes slFade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slMoon { from { opacity: 0; transform: scale(.86) rotate(-8deg); } to { opacity: 1; transform: none; } }
+    @keyframes slFly {
+      0%   { opacity: 0; transform: translate(-130%, -75%) scale(.35) rotate(-26deg); }
+      12%  { opacity: 1; }
+      35%  { transform: translate(-82%, -22%) scale(.62) rotate(-12deg); }
+      60%  { transform: translate(-32%, -46%) scale(.86) rotate(8deg); }
+      80%  { transform: translate(-5%, -9%) scale(1.04) rotate(-3deg); }
+      90%  { transform: translate(0, 2.5%) scale(.99) rotate(1deg); }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes slFlap { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.07, .92) skewX(-3deg); } }
+    @keyframes slSettle { 0% { transform: scale(1.02, .95); } 100% { transform: none; } }
+    @keyframes slColor { 0% { opacity: 0; filter: brightness(1.3); } 70% { opacity: 1; filter: brightness(1.15); } 100% { opacity: 1; filter: none; } }
+    @keyframes slGlow { 0% { opacity: 0; transform: scale(.7); } 45% { opacity: 1; transform: scale(1.05); } 100% { opacity: .65; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      .splash-bar span, .sl-base, .sl-moon, .sl-owl, .sl-flap, .sl-color { animation: none; }
+      .sl-glow { animation: none; opacity: .65; }
+    }
   
     #dlg { z-index: 9999; }
     #dlg .modal-box { margin-top: 18vh; }

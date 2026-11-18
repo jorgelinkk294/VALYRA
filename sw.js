@@ -3,7 +3,7 @@ importScripts('version.js');                       // define VALYRA_VERSION y VA
 const CACHE = 'valyra-' + self.VALYRA_VERSION;
 const LOCAL = [
   './', 'index.html', 'styles.css', 'storage.js', 'app.js', 'enhancements.js', 'version.js',
-  'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'
+  'manifest.webmanifest', 'logo.png', 'splash-base.png', 'splash-moon.png', 'splash-owl.png', 'splash-owl-color.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'
 ];
 // Librerias: se prefiere la copia local (vendor/); si no existe, se usa el CDN.
 const LIBS = [

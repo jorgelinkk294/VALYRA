@@ -21,13 +21,22 @@
 <div class="app-shell">
   <div id="splash" role="presentation">
     <div class="splash-box">
+      <div class="sl-stage" aria-hidden="true">
+        <div class="sl-glow"></div>
+        <img class="sl-layer sl-base" src="splash-base.png" alt="">
+        <img class="sl-layer sl-moon" src="splash-moon.png" alt="">
+        <div class="sl-owl"><div class="sl-flap">
+          <img class="sl-layer sl-color" src="splash-owl-color.png" alt="">
+          <img class="sl-layer sl-ink" src="splash-owl.png" alt="">
+        </div></div>
+      </div>
       <img id="splashLogo" src="logo.png" alt="Logo">
       <p>Iniciando...</p>
       <div class="splash-bar"><span></span></div>
     </div>
     <div class="splash-foot">Estampados y DTF</div>
   </div>
-  <script>setTimeout(function(){var e=document.getElementById('splash');if(!e)return;e.classList.add('out');setTimeout(function(){e.remove()},600)},2400)</script>
+  <script>(function(){var e=document.getElementById('splash');if(!e)return;var done=false;function go(){if(done)return;done=true;e.classList.add('out');setTimeout(function(){e.remove()},600)}var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;setTimeout(go,reduce?1600:4800);e.addEventListener('click',go)})()</script>
   <header class="topbar">
     <div class="brand" onclick="openBrandEdit()" style="cursor:pointer" role="button" aria-label="Editar logo y datos del negocio">
       <div class="brand-mark" id="brandMark">V</div>
