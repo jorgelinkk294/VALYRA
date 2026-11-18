@@ -381,11 +381,16 @@
     <section id="tabMock" class="hidden">
       <div class="page-heading">
         <h1>Mockups</h1>
-        <p>Elige color y talla, carga tu dise&#xF1;o y mira c&#xF3;mo queda. Arrastra la imagen sobre la playera para moverla.</p>
+        <p>Gira la playera en 3D arrastrando el fondo. Arrastra una imagen para moverla (pecho, espalda o mangas) y toca Fijar para dejarla en su lugar.</p>
       </div>
 
       <div class="card accent-card">
         <canvas id="mkCanvas" width="600" height="640" style="width:100%;border-radius:14px;background:#eef1f6;touch-action:none"></canvas>
+        <div id="mkViews" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Zoom</span>
+          <input id="mkZoom" type="range" min="50" max="300" value="100" oninput="mkSetZoom(this.value)" style="width:100%">
+        </div>
         <p id="mkInfo" style="margin:8px 0 0;font-size:12px;color:var(--muted)"></p>
       </div>
 
@@ -405,30 +410,28 @@
       <div class="section-label">Talla</div>
       <div class="card"><div id="mkSizes" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
 
-      <div class="section-label">Dise&#xF1;o</div>
+      <div class="section-label">Dise&#xF1;os</div>
       <div class="card">
         <input id="mkFile" type="file" accept="image/*" class="hidden" onchange="mkLoadImage(this)">
         <button class="btn btn-primary" onclick="document.getElementById('mkFile').click()">Cargar imagen</button>
+        <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">La imagen nueva se coloca en la parte de la playera que estas viendo (pecho, espalda o brazo).</p>
+        <div id="mkList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
         <div class="grid-2" style="margin-top:10px">
           <div class="field">
-            <span class="field-label">Ancho del estampado (cm)</span>
-            <input id="mkAncho" type="number" value="28" min="3" max="60" oninput="mkDraw()">
+            <span class="field-label">Ancho de la imagen (cm)</span>
+            <input id="mkAncho" type="number" value="28" min="2" max="60" oninput="mkSetWidth(this.value)" disabled>
           </div>
           <div class="field">
-            <span class="field-label">Vista</span>
-            <select id="mkVista" onchange="mkDraw()"><option value="0">Frente</option><option value="1">Espalda</option></select>
+            <span class="field-label">Giro (grados)</span>
+            <input id="mkRot" type="range" min="-180" max="180" value="0" oninput="mkSetRot(this.value)" style="width:100%" disabled>
           </div>
         </div>
-        <div class="field" style="margin-top:10px">
-          <span class="field-label">Horizontal</span>
-          <input id="mkX" type="range" min="-50" max="50" value="0" oninput="mkDraw()" style="width:100%">
-        </div>
-        <div class="field" style="margin-top:6px">
-          <span class="field-label">Vertical</span>
-          <input id="mkY" type="range" min="-40" max="60" value="0" oninput="mkDraw()" style="width:100%">
+        <div class="grid-2" style="margin-top:10px">
+          <button id="mkLockBtn" class="btn btn-light" onclick="mkToggleLock()" disabled>Fijar imagen</button>
+          <button id="mkDelBtn" class="btn btn-light" onclick="mkRemoveSel()" disabled>Quitar imagen</button>
         </div>
         <button class="btn btn-green" onclick="mkExport()">Exportar mockup (PNG)</button>
-        <button class="btn btn-light" onclick="mkClear()">Quitar imagen</button>
+        <button class="btn btn-light" onclick="mkClear()">Quitar todas las im&#xE1;genes</button>
       </div>
     </section>
     <section id="tabMas" class="hidden">

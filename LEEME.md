@@ -12,7 +12,7 @@ La versión actual está en `version.js` (es el único lugar donde se cambia).
 - `sw.js`: service worker (uso sin internet y aviso de actualización).
 - `splash.mp4`: el video que se reproduce al abrir la app (reemplaza la animación anterior).
 - `manifest.webmanifest`, `logo.png`, `icon-*.png`, `screenshots/`: datos e imágenes de la app.
-- `vendor/`: librerías locales (html2pdf, Chart.js, ExcelJS). Ver "Librerías" abajo.
+- `vendor/`: librerías locales (html2pdf, Chart.js, ExcelJS, Three.js). Ver "Librerías" abajo.
 - `.github/workflows/`: revisiones automáticas de GitHub. `tools/check.js`: la revisión en sí.
 - `.nojekyll`: hace que GitHub Pages sirva todos los archivos tal cual.
 
@@ -24,7 +24,7 @@ La versión actual está en `version.js` (es el único lugar donde se cambia).
 
 ## Librerías sin depender de internet (hazlo una sola vez)
 1. En el repositorio entra a la pestaña **Actions** y acepta habilitar los flujos si te lo pide.
-2. Elige **Descargar librerías** > **Run workflow**. Tarda menos de un minuto y crea la carpeta `vendor/` con los 3 archivos.
+2. Elige **Descargar librerías** > **Run workflow**. Tarda menos de un minuto y crea la carpeta `vendor/` con los 4 archivos.
 3. Si la página no se actualiza sola después, haz cualquier cambio pequeño (por ejemplo, en este LEEME) para que GitHub la vuelva a publicar.
 Mientras `vendor/` esté vacía, la app usa los CDN como antes, así que nada se rompe.
 
