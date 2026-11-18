@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>VALYRA | Gesti&#xF3;n de cotizaciones</title>
+
+  <script src="libs/html2pdf.bundle.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';document.head.appendChild(s)"></script>
+  <script src="libs/chart.umd.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';document.head.appendChild(s)"></script>
+  <script src="libs/exceljs.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';document.head.appendChild(s)"></script>
+
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+
+<body>
+<div class="app-shell">
+  <div id="splash" role="presentation">
+    <div class="splash-box">
+      <img id="splashLogo" src="logo.png" alt="Logo">
+      <p>Iniciando...</p>
+      <div class="splash-bar"><span></span></div>
+    </div>
+    <div class="splash-foot">Estampados y DTF</div>
+  </div>
+  <script>setTimeout(function(){var e=document.getElementById('splash');if(!e)return;e.classList.add('out');setTimeout(function(){e.remove()},600)},2400)</script>
+  <header class="topbar">
+    <div class="brand" onclick="openBrandEdit()" style="cursor:pointer" role="button" aria-label="Editar logo y datos del negocio">
+      <div class="brand-mark" id="brandMark">V</div>
+      <div>
+        <p class="brand-name" id="brandName">VALYRA</p>
+        <div class="brand-subtitle" id="brandSub">Cotizaciones y finanzas</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="total-pill">
+        <small>TOTAL COTIZACI&#xD3;N</small>
+        <b id="topTotal">$0</b>
+      </div>
+      <button class="icon-button" id="themeButton" aria-label="Cambiar tema" onclick="toggleTheme()">&#x25D0;</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="tabHome">
+      <div class="page-heading">
+        <h1>Inicio</h1>
+        <p>Elige una opci&#xF3;n para empezar</p>
+      </div>
+      <div class="home-grid" id="homeGrid">
+        <button class="home-card c-cot" style="--i:0" onclick="showTab('cot')">
+          <span class="hc-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l4 5-3 2v11H6V10L3 8z"/></svg></span>
+          <b>Cotizar</b>
+          <small>Crea y comparte cotizaciones</small>
+        </button>
+        <button class="home-card c-fin" style="--i:1" onclick="showTab('fin')">
+          <span class="hc-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span>
+          <b>Finanzas</b>
+          <small>Ventas, gastos y gr&#xE1;ficas</small>
+        </button>
+        <button class="home-card c-pre" style="--i:2" onclick="showTab('pre')">
+          <span class="hc-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1"/></svg></span>
+          <b>Precios</b>
+          <small>Tu lista de precios</small>
+        </button>
+        <button class="home-card c-reg" style="--i:3" onclick="showTab('reg')">
+          <span class="hc-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+          <b>Registros</b>
+          <small>Historial de movimientos</small>
+        </button>
+        <button class="home-card c-mock" style="--i:4" onclick="showTab('mock')">
+          <span class="hc-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5L5 21"/></svg></span>
+          <b>Mockups</b>
+          <small>Vista previa de prendas</small>
+        </button>
+        <button class="home-card c-mas" style="--i:5" onclick="showTab('mas')">
+          <span class="hc-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></span>
+          <b>M&#xE1;s</b>
+          <small>Clientes, inventario y respaldo</small>
+        </button>
+      </div>
+    </section>
+
+    <section id="tabCot" class="hidden">
+      <div class="page-heading">
+        <h1>Nueva cotizaci&#xF3;n</h1>
+        <p>Agrega productos, calcula el total y comparte tu cotizaci&#xF3;n.</p>
+      </div>
+
+      <div class="section-label">&#x2460; Producto</div>
+      <div class="card accent-card">
+        <div class="field">
+          <span class="field-label">Tipo de prenda</span>
+          <button id="btnTipo" class="select-button" onclick="openTipo()">Playera Cuello Redondo Manga Corta</button>
+        </div>
+
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field">
+            <span class="field-label">Talla</span>
+            <button id="btnTalla" class="select-button" onclick="openSize()">M</button>
+          </div>
+          <div class="field">
+            <span class="field-label">Color</span>
+            <button id="btnPrenda" class="select-button" onclick="openColor()">Negro</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field">
+            <span class="field-label">Cantidad</span>
+            <input id="pCant" type="number" value="1" min="1">
+          </div>
+          <div class="field">
+            <span class="field-label">Precio unitario ($)</span>
+            <input id="pPrecio" type="number" value="150" min="0">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Estampado (posiciones)</span>
+          <div id="posChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+
+        <button id="addProductBtn" class="btn btn-accent" onclick="addToQuote()">&#xFF0B; Agregar producto</button>
+      </div>
+
+      <div class="section-label">&#x2461; Cotizaci&#xF3;n actual</div>
+      <div class="card">
+        <div class="two-col" style="margin-bottom:10px">
+          <input id="cliente" placeholder="Nombre del cliente" list="clientesList">
+          <datalist id="clientesList"></datalist>
+          <input id="fecha" type="date" aria-label="Fecha de cotizaci&#xF3;n">
+        </div>
+
+        <div class="field">
+          <span class="field-label">Estado</span>
+          <select id="quoteStatus">
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <div id="quoteEmpty" class="empty">Todav&#xED;a no agregas productos.<br>Usa el formulario de arriba para comenzar.</div>
+
+        <div class="table-wrap">
+          <table id="quoteTable" class="quote-table hidden">
+            <thead>
+              <tr><th>#</th><th>Producto</th><th>Cant.</th><th>Precio</th><th>Total</th><th></th></tr>
+            </thead>
+            <tbody id="tb"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-label">&#x2462; Total</div>
+      <div class="total-box">
+        <div class="total-line"><span>Subtotal</span><span id="sub">$0</span></div>
+        <div class="total-line">
+          <span>Descuento (%)</span>
+          <input id="desc" type="number" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="total-line">
+          <span>Env&#xED;o ($)</span>
+          <input id="envio" type="number" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="total-line total-final"><span>TOTAL FINAL</span><span id="tot">$0</span></div>
+        <div class="total-line">
+          <span>Anticipo ($)</span>
+          <input id="anticipo" type="number" value="0" min="0" oninput="calc()">
+        </div>
+        <div class="total-line"><span>Saldo pendiente</span><span id="saldo">$0</span></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <details class="actions-dropdown">
+          <summary class="btn btn-primary">Opciones de cotizaci&#xF3;n&#x3000;&#x2304;</summary>
+          <div class="action-menu">
+            <button class="btn btn-light" onclick="openPreview()">Revisar cotizaci&#xF3;n</button>
+            <button class="btn btn-primary" onclick="exportPDF()">Exportar PDF</button>
+            <button class="btn btn-green" onclick="exportPNG()">Exportar imagen (PNG)</button>
+            <button class="btn btn-light" onclick="saveVenta()">Guardar cotizaci&#xF3;n</button>
+            <input id="logoFile" type="file" accept="image/*" class="hidden" onchange="loadLogo(this)">
+            <button class="btn btn-danger" onclick="clearQuote()">Borrar cotizaci&#xF3;n</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Historial de cotizaciones</h2>
+
+        <div class="two-col" style="margin-bottom:10px">
+          <input id="quoteHistorySearch" placeholder="Buscar cliente, fecha o status..." oninput="renderQuoteHistory()">
+          <select id="quoteHistoryFilter" onchange="renderQuoteHistory()">
+            <option value="todos">Todos</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="pagado">Pagados</option>
+            <option value="entregado">Entregados</option>
+            <option value="cancelado">Cancelados</option>
+          </select>
+        </div>
+
+        <div id="historyEmpty" class="empty">No hay cotizaciones guardadas todav&#xED;a.</div>
+        <div id="quoteHistoryList" class="quote-history-list"></div>
+      </div>
+    </section>
+
+    <section id="tabFin" class="hidden">
+      <div class="page-heading">
+        <h1>Finanzas</h1>
+        <p>Consulta ingresos, egresos, utilidad y movimientos del negocio.</p>
+      </div>
+
+      <div class="card">
+        <div class="stats-grid">
+          <div class="stat-card income"><small>INGRESOS</small><b id="kIn">$0</b></div>
+          <div class="stat-card expense"><small>EGRESOS</small><b id="kEg">$0</b></div>
+          <div class="stat-card profit"><small>UTILIDAD</small><b id="kUt">$0</b></div>
+          <div class="stat-card"><small>MARGEN</small><b id="kMg">0%</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Nuevo movimiento</h2>
+        <div class="grid-2">
+          <div class="field">
+            <span class="field-label">Tipo</span>
+            <select id="mTipo">
+              <option value="ingreso">Ingreso</option>
+              <option value="egreso">Egreso</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="field-label">Categor&#xED;a</span>
+            <select id="mCat">
+              <option>Venta</option>
+              <option>Materia Prima</option>
+              <option>Tinta</option>
+              <option>DTF</option>
+              <option>Prendas</option>
+              <option>Env&#xED;o</option>
+              <option>Renta</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="field-label">Concepto</span>
+            <input id="mConcepto" placeholder="Descripci&#xF3;n del movimiento">
+          </div>
+          <div class="field">
+            <span class="field-label">Monto ($)</span>
+            <input id="mMonto" type="number" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <span class="field-label">Fecha</span>
+            <input id="mFecha" type="date">
+          </div>
+          <div class="field" style="display:flex;align-items:end">
+            <button class="btn btn-primary" style="margin:0" onclick="addMov()">&#xFF0B; Agregar movimiento</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Resumen mensual</h2>
+        <div class="chart-wrap"><canvas id="chart"></canvas></div>
+        <button class="btn btn-accent" onclick="exportarFinanzasExcel()">Exportar registros y gr&#xE1;fica a Excel</button>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Movimientos recientes</h2>
+        <div id="recentEmpty" class="empty">A&#xFA;n no hay movimientos registrados.</div>
+        <div class="table-wrap">
+          <table id="recentTable" class="records-table hidden">
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Monto</th></tr></thead>
+            <tbody id="tbRecent"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-light" onclick="showTab('reg')">Ver todos los registros &#x2192;</button>
+      </div>
+    </section>
+
+    <section id="tabPre" class="hidden">
+      <div class="page-heading">
+        <h1>Lista de precios</h1>
+        <p>Guarda precios generales o espec&#xED;ficos por talla.</p>
+      </div>
+
+      <div class="card accent-card">
+        <h2 class="card-title">Agregar o actualizar precio</h2>
+        <div class="field">
+          <span class="field-label">Prenda</span>
+          <input id="prNombre" list="prList" placeholder="Ej: Playera Cuello V">
+          <datalist id="prList"></datalist>
+        </div>
+        <div class="field" style="margin-top:9px">
+          <span class="field-label">Talla</span>
+          <select id="prTalla"><option value="">Todas las tallas</option></select>
+        </div>
+        <div class="grid-2" style="margin-top:9px">
+          <div class="field">
+            <span class="field-label">Costo ($)</span>
+            <input id="prCosto" type="number" placeholder="0" min="0">
+          </div>
+          <div class="field">
+            <span class="field-label">Precio de venta ($)</span>
+            <input id="prPrecio" type="number" placeholder="0" min="0">
+          </div>
+        </div>
+        <button class="btn btn-accent" onclick="savePrecio()">Guardar precio</button>
+      </div>
+
+      <div class="card">
+        <label class="field-label" for="costoDTF">Costo DTF por pieza ($)</label>
+        <input id="costoDTF" type="number" value="0" min="0" oninput="saveDTF()">
+      </div>
+
+      <div class="card">
+        <input id="prBuscar" placeholder="Buscar prenda..." oninput="renderPrecios()">
+        <div class="table-wrap">
+          <table style="margin-top:8px;min-width:540px">
+            <thead><tr><th>Prenda</th><th>Talla</th><th>Costo</th><th>Precio</th><th></th></tr></thead>
+            <tbody id="tbPre"></tbody>
+          </table>
+        </div>
+        <div id="prEmpty" class="empty">A&#xFA;n no hay precios guardados.</div>
+      </div>
+    </section>
+
+    <section id="tabReg" class="hidden">
+      <div class="page-heading">
+        <h1>Registros</h1>
+        <p>Historial completo de ingresos, egresos y ventas guardadas.</p>
+      </div>
+
+      <div class="card">
+        <div class="stats-grid">
+          <div class="stat-card"><small>MOVIMIENTOS</small><b id="regCount">0</b></div>
+          <div class="stat-card income"><small>INGRESOS TOTALES</small><b id="regIncome">$0</b></div>
+          <div class="stat-card expense"><small>EGRESOS TOTALES</small><b id="regExpense">$0</b></div>
+          <div class="stat-card profit"><small>BALANCE</small><b id="regBalance">$0</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="two-col">
+          <input id="dateFrom" type="date" oninput="renderRegistros()">
+          <input id="dateTo" type="date" oninput="renderRegistros()">
+        </div>
+
+        <div class="filter-row" style="margin-top:10px">
+          <input id="regSearch" placeholder="Buscar concepto o categor&#xED;a..." oninput="renderRegistros()">
+          <select id="regFilter" onchange="renderRegistros()">
+            <option value="todos">Todos los tipos</option>
+            <option value="ingreso">Ingresos</option>
+            <option value="egreso">Egresos</option>
+          </select>
+        </div>
+
+        <div class="records-summary">
+          <span id="regShown">Mostrando 0 movimientos</span>
+          <button class="btn btn-small btn-light" onclick="exportarFinanzasExcel()">Excel</button>
+        </div>
+
+        <div id="regEmpty" class="empty">No hay movimientos que coincidan con la b&#xFA;squeda.</div>
+        <div class="table-wrap">
+          <table id="recordsTable" class="records-table hidden">
+            <thead>
+              <tr><th>Fecha</th><th>Tipo</th><th>Categor&#xED;a</th><th>Concepto</th><th>Monto</th><th></th></tr>
+            </thead>
+            <tbody id="tbReg"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <section id="tabMock" class="hidden">
+      <div class="page-heading">
+        <h1>Mockups</h1>
+        <p>Elige color y talla, carga tu dise&#xF1;o y mira c&#xF3;mo queda. Arrastra la imagen sobre la playera para moverla.</p>
+      </div>
+
+      <div class="card accent-card">
+        <canvas id="mkCanvas" width="600" height="640" style="width:100%;border-radius:14px;background:#eef1f6;touch-action:none"></canvas>
+        <p id="mkInfo" style="margin:8px 0 0;font-size:12px;color:var(--muted)"></p>
+      </div>
+
+      <div class="section-label">Color</div>
+      <div class="card">
+        <div id="mkColors" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <div class="grid-2" style="margin-top:12px">
+          <button id="mkDropBtn" class="btn btn-light" onclick="mkToggleDropper()">Gotero</button>
+          <button class="btn btn-light" onclick="mkBgColor()">Fondo del dise&#xF1;o</button>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Color personalizado</span>
+          <input id="mkCustom" type="color" value="#ffffff" oninput="mkSetCustom(this.value)" style="width:100%;height:42px;padding:3px">
+        </div>
+      </div>
+
+      <div class="section-label">Talla</div>
+      <div class="card"><div id="mkSizes" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+
+      <div class="section-label">Dise&#xF1;o</div>
+      <div class="card">
+        <input id="mkFile" type="file" accept="image/*" class="hidden" onchange="mkLoadImage(this)">
+        <button class="btn btn-primary" onclick="document.getElementById('mkFile').click()">Cargar imagen</button>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field">
+            <span class="field-label">Ancho del estampado (cm)</span>
+            <input id="mkAncho" type="number" value="28" min="3" max="60" oninput="mkDraw()">
+          </div>
+          <div class="field">
+            <span class="field-label">Vista</span>
+            <select id="mkVista" onchange="mkDraw()"><option value="0">Frente</option><option value="1">Espalda</option></select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Horizontal</span>
+          <input id="mkX" type="range" min="-50" max="50" value="0" oninput="mkDraw()" style="width:100%">
+        </div>
+        <div class="field" style="margin-top:6px">
+          <span class="field-label">Vertical</span>
+          <input id="mkY" type="range" min="-40" max="60" value="0" oninput="mkDraw()" style="width:100%">
+        </div>
+        <button class="btn btn-green" onclick="mkExport()">Exportar mockup (PNG)</button>
+        <button class="btn btn-light" onclick="mkClear()">Quitar imagen</button>
+      </div>
+    </section>
+    <section id="tabMas" class="hidden">
+      <div class="page-heading">
+        <h1>M&#xE1;s</h1>
+        <p>Clientes, inventario de playeras y precios de estampado.</p>
+      </div>
+
+      <div class="section-label">Clientes</div>
+      <div class="card">
+        <div class="grid-2">
+          <div class="field"><span class="field-label">Nombre</span><input id="cliNombre" placeholder="Nombre"></div>
+          <div class="field"><span class="field-label">Tel&#xE9;fono</span><input id="cliTel" type="tel" placeholder="664 000 0000"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveCliente()">Guardar cliente</button>
+        <input id="cliBuscar" placeholder="Buscar cliente" oninput="renderClientes()" style="margin-top:10px">
+        <div id="cliList"></div>
+      </div>
+
+      <div class="section-label">Inventario de playeras</div>
+      <div class="card">
+        <div class="grid-2">
+          <div class="field"><span class="field-label">Color</span><select id="invColor"></select></div>
+          <div class="field"><span class="field-label">Talla</span><select id="invTalla"></select></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field"><span class="field-label">Piezas a sumar (o restar)</span><input id="invCant" type="number" value="1"></div>
+          <div class="field"><span class="field-label">Avisar cuando queden</span><input id="invMin" type="number" min="0" value="3" onchange="saveInvMin()"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addInv()">Actualizar inventario</button>
+        <div id="invList"></div>
+      </div>
+
+      <div class="section-label">Precios de estampado</div>
+      <div class="card">
+        <p style="margin:0 0 8px;font-size:12px;color:var(--muted)">Se suman al precio de cada prenda cuando eliges la posici&#xF3;n en la cotizaci&#xF3;n.</p>
+        <div id="posList"></div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field"><span class="field-label">Posici&#xF3;n</span><input id="posNombre" placeholder="Ej: Cuello"></div>
+          <div class="field"><span class="field-label">Precio extra ($)</span><input id="posPrecio" type="number" min="0" value="0"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addPos()">Agregar posici&#xF3;n</button>
+      </div>
+    
+      <div class="section-label">Aplicaci&#xF3;n</div>
+      <div class="card">
+        <p style="margin:0 0 10px;font-size:13px;color:var(--muted)">Si publicaste cambios en Netlify, toca el bot&#xF3;n para buscarlos ahora.</p>
+        <button class="btn btn-primary" onclick="checkForUpdate(true)">Buscar actualizaciones</button>
+        <button class="btn btn-light" onclick="enableUpdateNotifications(true)">Activar avisos de actualizaci&#xF3;n</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-note" id="footerNote">VALYRA &#xB7; Tus datos se guardan en este dispositivo.</div>
+</div>
+
+<div id="sizeModal" class="modal" onclick="modalBackdrop(event, 'sizeModal')">
+  <div class="modal-box">
+    <h2 class="modal-title">Selecciona talla</h2>
+    <div id="sizeList"></div>
+    <button class="btn btn-light" onclick="closeM('sizeModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="colorModal" class="modal" onclick="modalBackdrop(event, 'colorModal')">
+  <div class="modal-box">
+    <h2 id="colorTitle" class="modal-title">Color</h2>
+    <div id="colorList"></div>
+    <button class="btn btn-light" onclick="closeM('colorModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="previewModal" class="modal" onclick="modalBackdrop(event, 'previewModal')">
+  <div class="modal-box wide">
+    <div id="livePreview"></div>
+    <button class="btn btn-primary" onclick="exportPDF()">Exportar PDF</button>
+    <button class="btn btn-green" onclick="exportPNG()">Exportar imagen (PNG)</button>
+    <button class="btn btn-light" onclick="closeM('previewModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="imgModal" class="modal" onclick="modalBackdrop(event, 'imgModal')">
+  <div class="modal-box wide">
+    <p style="font-size:12px">Mant&#xE9;n presionada la imagen para guardarla o compartirla.</p>
+    <img id="imgOut" alt="Cotizaci&#xF3;n" style="display:block;width:100%;border:1px solid var(--border);border-radius:12px">
+    <button class="btn btn-green" onclick="window.open('https://wa.me/','_blank')">Abrir WhatsApp</button>
+    <button class="btn btn-light" onclick="closeM('imgModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="brandModal" class="modal" onclick="modalBackdrop(event, 'brandModal')">
+  <div class="modal-box">
+    <h2 class="modal-title">Datos del negocio</h2>
+    <span class="field-label">Nombre</span>
+    <input id="brandNameInput" maxlength="30" placeholder="Nombre del negocio">
+    <span class="field-label" style="margin-top:9px">Texto bajo el nombre (barra superior)</span>
+    <input id="brandSubInput" maxlength="40" placeholder="Ej: Cotizaciones y finanzas">
+    <span class="field-label" style="margin-top:9px">Texto bajo el logo en la cotizaci&#xF3;n</span>
+    <input id="brandInfoInput" maxlength="60" placeholder="Ej: TIJUANA B.C. - Tel. 664 000 0000">
+    <button class="btn btn-light" onclick="document.getElementById('logoFile').click()">Subir o cambiar logo</button>
+    <button class="btn btn-light" onclick="removeLogo()">Quitar logo</button>
+    <button class="btn btn-light" onclick="openBackup()">Respaldar / restaurar datos</button>
+    <button class="btn btn-light" onclick="closeM('brandModal');checkForUpdate(true)">Buscar actualizaciones</button>
+    <button class="btn btn-primary" onclick="saveBrand()">Guardar</button>
+    <button class="btn btn-light" onclick="closeM('brandModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="backupModal" class="modal" onclick="modalBackdrop(event, 'backupModal')">
+  <div class="modal-box">
+    <h2 class="modal-title">Respaldo de datos</h2>
+    <p style="margin:0 0 8px;font-size:12px">Para respaldar: toca Generar y luego Copiar, y pega el texto en WhatsApp o en una nota. Para restaurar: pega el texto aqu&#xED; y toca Restaurar.</p>
+    <textarea id="backupText" style="width:100%;min-height:140px;font-size:11px;font-family:monospace;border:1px solid var(--border);border-radius:12px;padding:10px;background:transparent;color:inherit"></textarea>
+    <button class="btn btn-primary" onclick="makeBackup()">Generar respaldo</button>
+    <button class="btn btn-green" onclick="copyBackup()">Copiar respaldo</button>
+    <button class="btn btn-green" onclick="downloadBackup()">Guardar / compartir como archivo</button>
+    <input id="backupFile" type="file" accept=".json,application/json" style="display:none" onchange="loadBackupFile(this)">
+    <button class="btn btn-light" onclick="document.getElementById('backupFile').click()">Restaurar desde archivo</button>
+    <button class="btn btn-light" onclick="restoreBackup()">Restaurar desde el texto pegado</button>
+    <button class="btn btn-light" onclick="closeM('backupModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="fileModal" class="modal" onclick="modalBackdrop(event, 'fileModal')">
+  <div class="modal-box">
+    <h2 id="fileModalTitle" class="modal-title">Archivo listo</h2>
+    <p id="fileModalName" style="margin:0 0 6px;color:var(--muted);font-size:12px;overflow-wrap:anywhere"></p>
+    <button class="btn btn-green" onclick="fileShare()">Compartir</button>
+    <button class="btn btn-light" onclick="closeM('fileModal')">Cerrar</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<div id="updModal" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-box upd-box">
+    <div class="upd-logo"><img id="updLogo" src="logo.png" alt="Logo"></div>
+    <div id="updName" class="upd-name">VALYRA</div>
+    <h2 class="modal-title upd-title">Actualizaci&#xF3;n disponible</h2>
+    <p class="upd-text">Hay una versi&#xF3;n nueva con mejoras. Tus datos se conservan.</p>
+    <button id="updBtn" class="btn btn-primary" onclick="applyUpdate()">Actualizar APK</button>
+    <button class="btn btn-light" onclick="updateLater()">M&#xE1;s tarde</button>
+  </div>
+</div>
+
+<div id="dlg" class="modal" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <p id="dlgMsg"></p>
+    <button id="dlgOk" class="btn btn-primary">Aceptar</button>
+    <button id="dlgNo" class="btn btn-light">Cancelar</button>
+  </div>
+</div>
+
+<script src="js/store.js"></script>
+<script>
+storeReady.then(function () {
+  var s = document.createElement('script');
+  s.src = 'js/app.js';
+  document.body.appendChild(s);
+});
+</script>
+
+
+</body>
+</html>
