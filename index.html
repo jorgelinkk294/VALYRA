@@ -94,19 +94,23 @@
       <div class="section-label">&#x2460; Producto</div>
       <div class="card accent-card">
         <div class="field">
+          <span class="field-label">G&#xE9;nero</span>
+          <div id="cotGenero" class="chip-row"></div>
+        </div>
+
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Talla</span>
+          <div id="cotTalla" class="chip-row"></div>
+        </div>
+
+        <div class="field" style="margin-top:10px">
           <span class="field-label">Tipo de prenda</span>
           <button id="btnTipo" class="select-button" onclick="openTipo()">Playera Cuello Redondo Manga Corta</button>
         </div>
 
-        <div class="grid-2" style="margin-top:10px">
-          <div class="field">
-            <span class="field-label">Talla</span>
-            <button id="btnTalla" class="select-button" onclick="openSize()">M</button>
-          </div>
-          <div class="field">
-            <span class="field-label">Color</span>
-            <button id="btnPrenda" class="select-button" onclick="openColor()">Negro</button>
-          </div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Color</span>
+          <button id="btnPrenda" class="select-button" onclick="openColor()">Negro</button>
         </div>
 
         <div class="grid-2" style="margin-top:10px">
@@ -298,9 +302,15 @@
           <input id="prNombre" list="prList" placeholder="Ej: Playera Cuello V">
           <datalist id="prList"></datalist>
         </div>
-        <div class="field" style="margin-top:9px">
-          <span class="field-label">Talla</span>
-          <select id="prTalla"><option value="">Todas las tallas</option></select>
+        <div class="grid-2" style="margin-top:9px">
+          <div class="field">
+            <span class="field-label">G&#xE9;nero</span>
+            <select id="prGenero" onchange="prFillTallas()"></select>
+          </div>
+          <div class="field">
+            <span class="field-label">Talla</span>
+            <select id="prTalla"><option value="">Todas las tallas</option></select>
+          </div>
         </div>
         <div class="grid-2" style="margin-top:9px">
           <div class="field">
@@ -391,10 +401,6 @@
           <button id="mkUndoBtn" class="btn btn-light" onclick="mkUndo()" disabled>&#x21B6; Deshacer</button>
           <button id="mkRedoBtn" class="btn btn-light" onclick="mkRedo()" disabled>&#x21B7; Rehacer</button>
         </div>
-        <div class="field" style="margin-top:10px">
-          <span class="field-label">Zoom</span>
-          <input id="mkZoom" type="range" min="50" max="300" value="100" oninput="mkSetZoom(this.value)" style="width:100%">
-        </div>
         <p id="mkInfo" style="margin:8px 0 0;font-size:12px;color:var(--muted)"></p>
       </div>
 
@@ -411,8 +417,21 @@
         </div>
       </div>
 
-      <div class="section-label">Talla</div>
-      <div class="card"><div id="mkSizes" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+      <div class="section-label">Prenda</div>
+      <div class="card">
+        <div class="field">
+          <span class="field-label">G&#xE9;nero</span>
+          <div id="mkGenero" class="chip-row"></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Talla</span>
+          <div id="mkSizes" class="chip-row"></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <span class="field-label">Tipo de prenda</span>
+          <select id="mkTipo" onchange="mkPickTipo(this.value)"></select>
+        </div>
+      </div>
 
       <div class="section-label">Dise&#xF1;os</div>
       <div class="card">
@@ -420,17 +439,6 @@
         <button class="btn btn-primary" onclick="document.getElementById('mkFile').click()">Cargar imagen</button>
         <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">La imagen nueva se coloca en la parte de la playera que estas viendo (pecho, espalda o brazo).</p>
         <div id="mkList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
-        <div class="grid-2" style="margin-top:10px">
-          <div class="field">
-            <span class="field-label">Ancho de la imagen (cm)</span>
-            <input id="mkAncho" type="number" value="28" min="2" max="60" oninput="mkSetWidth(this.value)" class="mk-needs-sel" disabled>
-          </div>
-          <div class="field">
-            <span class="field-label">Giro (grados)</span>
-            <input id="mkRot" type="range" min="-180" max="180" value="0" oninput="mkSetRot(this.value)" style="width:100%" class="mk-needs-sel" disabled>
-          </div>
-        </div>
-
         <div class="section-label" style="margin-top:14px">Colocaci&#xF3;n</div>
         <div class="grid-2">
           <button class="btn btn-light mk-needs-sel" onclick="mkCenter()" disabled>Centrar</button>
@@ -525,6 +533,9 @@
       <div class="card">
         <div class="grid-2">
           <div class="field"><span class="field-label">Color</span><select id="invColor"></select></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field"><span class="field-label">G&#xE9;nero</span><select id="invGenero" onchange="invFillTallas()"></select></div>
           <div class="field"><span class="field-label">Talla</span><select id="invTalla"></select></div>
         </div>
         <div class="grid-2" style="margin-top:10px">
@@ -556,14 +567,6 @@
   </main>
 
   <div class="footer-note" id="footerNote">VALYRA &#xB7; Tus datos se guardan en este dispositivo.</div>
-</div>
-
-<div id="sizeModal" class="modal" onclick="modalBackdrop(event, 'sizeModal')">
-  <div class="modal-box">
-    <h2 class="modal-title">Selecciona talla</h2>
-    <div id="sizeList"></div>
-    <button class="btn btn-light" onclick="closeM('sizeModal')">Cerrar</button>
-  </div>
 </div>
 
 <div id="colorModal" class="modal" onclick="modalBackdrop(event, 'colorModal')">

@@ -12,19 +12,6 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[char]);
 
-  const sizeGroups = [
-    { name: 'Hombre', sizes: ['S Hombre', 'M Hombre', 'L Hombre'] },
-    { name: 'Mujer', sizes: ['S Mujer', 'M Mujer', 'L Mujer'] },
-    { name: 'Unisex', sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] },
-    { name: 'Infantil y bebé', sizes: ['8 Niño', '10 Niño', '12 Niño', '14 Niño', '0-3M', '6-12M', 'Unitalla'] }
-  ];
-  const chest = {
-    'S Hombre': 49, 'M Hombre': 52, 'L Hombre': 55,
-    'S Mujer': 44, 'M Mujer': 47, 'L Mujer': 50,
-    XS: 46, S: 49, M: 52, L: 55, XL: 58, '2XL': 61, '3XL': 64, '4XL': 67,
-    '8 Niño': 36, '10 Niño': 39, '12 Niño': 42, '14 Niño': 45,
-    '0-3M': 26, '6-12M': 31
-  };
   const shirtTypes = [
     'Playera Cuello V', 'Playera Premium', 'Playera Tipo Polo',
     'Playera Cuello Redondo Manga Larga', 'Playera Sublimac',
@@ -126,27 +113,6 @@
     window.showTab = wrapped;
   }
 
-  function showSizeOptions() {
-    const box = $('sizeList');
-    if (!box || typeof window.setSize !== 'function') return;
-    box.innerHTML = sizeGroups.map(group => {
-      const options = group.sizes;
-      return options.length
-        ? `<h3 style="margin:12px 4px 5px;color:var(--muted);font-size:11px">${group.name}</h3>` +
-          options.map(size => `<button class="opt" type="button" onclick="setSize('${esc(size)}')">${esc(size)}${chest[size] ? ` · pecho aprox. ${chest[size]} cm` : ''}</button>`).join('')
-        : '';
-    }).join('');
-    if ($('sizeModal')) $('sizeModal').style.display = 'block';
-  }
-
-  function setupGroupedSizes() {
-    const original = window.openSize;
-    if (typeof original !== 'function' || original.__valyraSizesWrapped) return;
-    const wrapped = function () { showSizeOptions(); };
-    wrapped.__valyraSizesWrapped = true;
-    window.openSize = wrapped;
-  }
-
   function setupPricing() {
     const positions = $('posChips');
     if (positions && positions.closest('.field')) positions.closest('.field').classList.add('hidden');
@@ -201,7 +167,6 @@
     setupSections();
     setupInventoryNavigation();
     addInventoryMenu();
-    setupGroupedSizes();
     setupPricing();
     setupFinance();
     if (typeof window.renderMas === 'function') window.renderMas();
@@ -211,7 +176,7 @@
 
   let attempts = 0;
   function waitForApp() {
-    if (typeof window.showTab === 'function' && typeof window.openSize === 'function') {
+    if (typeof window.showTab === 'function' && typeof window.setSize === 'function') {
       init();
       return;
     }

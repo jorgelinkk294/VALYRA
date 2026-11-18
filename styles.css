@@ -945,3 +945,8 @@ body.halloween .footer-note { position: relative; z-index: 1; padding-bottom: 90
 @media (prefers-reduced-motion: reduce) {
   body.xmas::before, body.xmas::after, body.halloween::after { animation: none; }
 }
+
+/* Selector simple: genero y talla */
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 9px 15px; border-radius: 12px; font-size: 13px; font-weight: 800; color: inherit; border: 2px solid var(--border); background: transparent; cursor: pointer; }
+.chip.active { border-color: #6d5dfc; background: rgba(109,93,252,.16); }

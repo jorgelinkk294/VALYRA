@@ -90,6 +90,39 @@ const tiposPrenda = [
   'Sudadera Unisex Premium Capucha y Cierre'
 ];
 
+// ---------- Selector simple de talla: primero Genero, luego Talla ----------
+// La talla se sigue guardando como texto ('M', 'S Mujer', '10 Nino'...), asi que los datos viejos no cambian.
+const tallaGrupos = [
+  { id: 'unisex', nombre: 'Unisex', defecto: 'M', tallas: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', 'Unitalla'] },
+  { id: 'mujer', nombre: 'Mujer', defecto: 'M Mujer', tallas: ['S Mujer', 'M Mujer', 'L Mujer'] },
+  { id: 'hombre', nombre: 'Hombre', defecto: 'M Hombre', tallas: ['S Hombre', 'M Hombre', 'L Hombre'] },
+  { id: 'nino', nombre: 'Ni\u00F1o', defecto: '10 Ni\u00F1o', tallas: ['8 Ni\u00F1o', '10 Ni\u00F1o', '12 Ni\u00F1o', '14 Ni\u00F1o'] },
+  { id: 'bebe', nombre: 'Beb\u00E9', defecto: '0-3M', tallas: ['0-3M', '6-12M'] }
+];
+function tallaCorta(t) { return String(t).replace(/ (Mujer|Hombre|Ni\u00F1o)$/, ''); }
+function tallaGenero(t) {
+  const g = tallaGrupos.find(x => x.tallas.indexOf(t) >= 0);
+  return g ? g.id : 'unisex';
+}
+// Al cambiar de genero se conserva la misma letra si existe (M -> M Mujer); si no, la talla de siempre del grupo.
+function tallaEquivalente(t, genId) {
+  const g = tallaGrupos.find(x => x.id === genId);
+  if (!g) return t;
+  return g.tallas.find(x => tallaCorta(x) === tallaCorta(t)) || g.defecto;
+}
+function chipsGeneroHtml(talla, fn) {
+  const act = tallaGenero(talla);
+  return tallaGrupos.map(g =>
+    `<button type="button" class="chip${g.id === act ? ' active' : ''}" onclick="${fn}('${g.id}')">${esc(g.nombre)}</button>`
+  ).join('');
+}
+function chipsTallaHtml(talla, fn) {
+  const g = tallaGrupos.find(x => x.id === tallaGenero(talla));
+  return g.tallas.map(t =>
+    `<button type="button" class="chip${t === talla ? ' active' : ''}" onclick="${fn}('${esc(t)}')">${esc(tallaCorta(t))}</button>`
+  ).join('');
+}
+
 function money(value) {
   return new Intl.NumberFormat('es-MX', {
     style: 'currency',
@@ -327,19 +360,17 @@ function setSuggestedPrice() {
   if (item) document.getElementById('pPrecio').value = item.precio;
 }
 
-function openSize() {
-  const box = document.getElementById('sizeList');
-  box.innerHTML = tallas.map(t =>
-    `<button class="opt" type="button" onclick="setSize('${esc(t)}')">${esc(t)}</button>`
-  ).join('');
-  document.getElementById('sizeModal').style.display = 'block';
+function renderCotTalla() {
+  document.getElementById('cotGenero').innerHTML = chipsGeneroHtml(curTalla, 'pickGenero');
+  document.getElementById('cotTalla').innerHTML = chipsTallaHtml(curTalla, 'setSize');
 }
+
+function pickGenero(id) { setSize(tallaEquivalente(curTalla, id)); }
 
 function setSize(talla) {
   curTalla = talla;
-  document.getElementById('btnTalla').textContent = talla;
+  renderCotTalla();
   setSuggestedPrice();
-  closeM('sizeModal');
 }
 
 function openColor() {
@@ -404,7 +435,7 @@ function prepareEditProduct(index) {
   curPrenda = p.prenda;
 
   document.getElementById('btnTipo').textContent = p.name;
-  document.getElementById('btnTalla').textContent = p.talla;
+  renderCotTalla();
   document.getElementById('btnPrenda').textContent = p.prenda;
 
   document.getElementById('pCant').value = p.cant;
@@ -1297,7 +1328,7 @@ function savePrecio() {
   savePrecios();
 
   document.getElementById('prNombre').value = '';
-  document.getElementById('prTalla').value = '';
+  prSetTalla('');
   document.getElementById('prCosto').value = '';
   document.getElementById('prPrecio').value = '';
 
@@ -1308,7 +1339,7 @@ function editPrecio(index) {
   const item = precios[index];
   if (!item) return;
   document.getElementById('prNombre').value = item.nombre || '';
-  document.getElementById('prTalla').value = item.talla || '';
+  prSetTalla(item.talla || '');
   document.getElementById('prCosto').value = item.costo || 0;
   document.getElementById('prPrecio').value = item.precio || 0;
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1420,9 +1451,25 @@ async function exportarFinanzasExcel() {
   }
 }
 
-document.getElementById('prTalla').innerHTML =
-  '<option value="">Todas las tallas</option>' +
-  tallas.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+// Lista de precios: Genero "Todos" = precio general (sin talla); con un genero eliges su talla.
+function prFillTallas(selected) {
+  const gen = document.getElementById('prGenero').value;
+  const sel = document.getElementById('prTalla');
+  const g = tallaGrupos.find(x => x.id === gen);
+  sel.innerHTML = g
+    ? g.tallas.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('')
+    : '<option value="">Todas las tallas</option>';
+  sel.disabled = !g;
+  if (g && selected) sel.value = selected;
+}
+function prSetTalla(t) {
+  document.getElementById('prGenero').value = t ? tallaGenero(t) : '';
+  prFillTallas(t);
+}
+document.getElementById('prGenero').innerHTML =
+  '<option value="">Todos</option>' +
+  tallaGrupos.map(g => `<option value="${g.id}">${esc(g.nombre)}</option>`).join('');
+prSetTalla('');
 
 document.getElementById('fecha').value = hoy();
 document.getElementById('mFecha').value = hoy();
@@ -1824,6 +1871,11 @@ function saveInvMin() {
   renderInv();
 }
 
+function invFillTallas() {
+  const g = tallaGrupos.find(x => x.id === document.getElementById('invGenero').value) || tallaGrupos[0];
+  document.getElementById('invTalla').innerHTML = g.tallas.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+}
+
 function addInv() {
   const color = document.getElementById('invColor').value;
   const talla = document.getElementById('invTalla').value;
@@ -1885,7 +1937,9 @@ function renderMas() {
 
 (function masInit() {
   document.getElementById('invColor').innerHTML = colores.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  document.getElementById('invTalla').innerHTML = tallas.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  document.getElementById('invGenero').innerHTML = tallaGrupos.map(g => `<option value="${g.id}">${esc(g.nombre)}</option>`).join('');
+  invFillTallas();
+  renderCotTalla();
   fillClientesList();
   renderPosChips();
 })();

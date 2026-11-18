@@ -23,7 +23,7 @@ const MK_UNDO_MAX = 60;
 //   img = lo que se pinta (la original o la version sin fondo), orig = original, src = original en data URL (para guardar)
 //   bg = null | { tol, inner } (quitar fondo)
 const mkState = {
-  color: 5, talla: 2, custom: null, pick: false, decals: [], sel: null, nextId: 1, yaw: 0, pitch: 0.05, zoom: 1, loading: null,
+  color: 5, talla: 2, tipo: 'Playera Cuello Redondo Manga Corta', custom: null, pick: false, decals: [], sel: null, nextId: 1, yaw: 0, pitch: 0.05, zoom: 1, loading: null,
   guides: true, undo: [], redo: [], lastTag: null, lastTagAt: 0, dirty: false, curId: null, booted: null, meta: { nombre: '', cliente: '', cotId: '' }
 };
 let mk = null;      // escena 3D (se crea al abrir Mockups)
@@ -148,9 +148,19 @@ function mkBuildControls() {
   document.getElementById('mkColors').innerHTML = colores.map((c, i) =>
     `<button title="${esc(c)}" aria-label="${esc(c)}" onclick="mkPickColor(${i})" style="width:34px;height:34px;border-radius:50%;background:${mkHex[i]};border:3px solid ${(i === mkState.color && !mkState.custom) ? '#6d5dfc' : 'rgba(128,128,128,.45)'}"></button>`
   ).join('');
-  document.getElementById('mkSizes').innerHTML = tallas.map((t, i) =>
-    `<button onclick="mkPickSize(${i})" style="${mkChipStyle(i === mkState.talla)}">${esc(t)}</button>`
+  const tAct = tallas[mkState.talla];
+  document.getElementById('mkGenero').innerHTML = tallaGrupos.map(g =>
+    `<button type="button" class="chip${g.id === tallaGenero(tAct) ? ' active' : ''}" onclick="mkPickGenero('${g.id}')">${esc(g.nombre)}</button>`
   ).join('');
+  const grp = tallaGrupos.find(g => g.id === tallaGenero(tAct));
+  document.getElementById('mkSizes').innerHTML = grp.tallas.map(n => {
+    const i = tallas.indexOf(n);
+    return `<button type="button" class="chip${i === mkState.talla ? ' active' : ''}" onclick="mkPickSize(${i})">${esc(tallaCorta(n))}</button>`;
+  }).join('');
+  const tipoSel = document.getElementById('mkTipo');
+  if (tipoSel) {
+    tipoSel.innerHTML = tiposPrenda.map(t => `<option value="${esc(t)}"${t === mkState.tipo ? ' selected' : ''}>${esc(t)}</option>`).join('');
+  }
   const cur = mkCurRegion();
   document.getElementById('mkViews').innerHTML = Object.keys(MK_REGIONS).map(k =>
     `<button onclick="mkView('${k}')" style="${mkChipStyle(k === cur)}">${MK_REGIONS[k]}</button>`
@@ -171,8 +181,6 @@ function mkSetVal(id, v) { const el = document.getElementById(id); if (el && doc
 function mkSyncInputs() {
   const d = mkSelDecal();
   if (d) {
-    mkSetVal('mkAncho', mkR1(d.wcm));
-    mkSetVal('mkRot', d.rot);
     const p = mkPlacement(d);
     mkSetVal('mkNeck', p ? mkR1(p.neck) : '');
   }
@@ -211,7 +219,7 @@ function mkInfo() {
   const el = document.getElementById('mkInfo');
   if (!el) return;
   const pecho = mkPecho[mkState.talla];
-  let t = 'Talla ' + tallas[mkState.talla] + ' · ancho de pecho aprox. ' + pecho + ' cm · ' + (mkState.custom ? 'color ' + mkState.custom : colores[mkState.color]);
+  let t = mkState.tipo + ' · talla ' + tallas[mkState.talla] + ' · ancho de pecho aprox. ' + pecho + ' cm · ' + (mkState.custom ? 'color ' + mkState.custom : colores[mkState.color]);
   const d = mkSelDecal();
   if (d) {
     t += ' · imagen ' + d.n + ': ' + d.wcm.toFixed(0) + ' x ' + mkDecalH(d).toFixed(0) + ' cm' + (d.locked ? ' (fija)' : '');
@@ -242,9 +250,19 @@ function mkPickSize(i) {
   mkRefresh();
   mkChanged();
 }
+function mkPickGenero(id) {
+  const n = tallaEquivalente(tallas[mkState.talla], id);
+  const i = tallas.indexOf(n);
+  if (i >= 0) mkPickSize(i);
+}
+function mkPickTipo(v) {
+  if (tiposPrenda.indexOf(v) < 0 || v === mkState.tipo) return;
+  mkState.tipo = v;
+  mkRefresh();
+  mkChanged();
+}
 function mkRefresh() { mkBuildControls(); mkSyncUI(); mkInfo(); if (mk && mk.shirt) { mkPaintAll(); mkInvalidate(); } }
 
-function mkSetZoom(v) { mkState.zoom = mkClamp(Number(v) / 100 || 1, 0.5, 3); mkInvalidate(); }
 
 function mkView(name) {
   const yaw = MK_YAW[name];
@@ -323,21 +341,6 @@ function mkSelectDecal(id) {
   mkSyncUI(); mkInfo(); mkInvalidate();
 }
 
-function mkSetWidth(v) {
-  const d = mkSelDecal();
-  if (!d) return;
-  mkCommit('w' + d.id);
-  const R = mk.regions[d.region];
-  d.wcm = mkClamp(Number(v) || d.wcm, 2, Math.max(4, R.wCm));
-  mkPaint(d.region); mkSyncInputs(); mkInvalidate(); mkChanged();
-}
-function mkSetRot(v) {
-  const d = mkSelDecal();
-  if (!d) return;
-  mkCommit('r' + d.id);
-  d.rot = mkClamp(Number(v) || 0, -180, 180);
-  mkPaint(d.region); mkSyncInputs(); mkInvalidate(); mkChanged();
-}
 function mkToggleLock() {
   const d = mkSelDecal();
   if (!d) return;
@@ -1093,8 +1096,6 @@ function mkDecalAt(hit) {
     const p = pair();
     if (pinch.mode === 'zoom') {
       mkState.zoom = mkClamp(pinch.z0 * p.dist / pinch.dist0, 0.5, 3);
-      const z = document.getElementById('mkZoom');
-      if (z) z.value = Math.round(mkState.zoom * 100);
       mkInvalidate();
       return;
     }
@@ -1191,8 +1192,6 @@ function mkDecalAt(hit) {
     if (!mk || !mk.shirt) return;
     e.preventDefault();
     mkState.zoom = mkClamp(mkState.zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08), 0.5, 3);
-    const z = document.getElementById('mkZoom');
-    if (z) z.value = Math.round(mkState.zoom * 100);
     mkInvalidate();
   }, { passive: false });
   window.addEventListener('resize', () => { if (mk && mk.shirt) mkResize(); });
@@ -1319,7 +1318,7 @@ async function mkBuildSheet() {
   x.fillText('Mockup' + (meta.nombre ? ' · ' + meta.nombre : ''), M, 138);
   x.font = '500 26px ' + FONT;
   const colorName = mkState.custom ? 'color ' + mkState.custom : colores[mkState.color];
-  x.fillText('Talla ' + tallas[mkState.talla] + ' · ' + colorName, M, 176);
+  x.fillText(mkState.tipo + ' · Talla ' + tallas[mkState.talla] + ' · ' + colorName, M, 176);
   x.textAlign = 'right';
   x.fillStyle = '#1b1e28';
   x.font = '700 32px ' + FONT;
@@ -1431,7 +1430,7 @@ function mkSerialize() {
   const imgs = [];
   const idx = s => { let i = imgs.indexOf(s); if (i < 0) { imgs.push(s); i = imgs.length - 1; } return i; };
   return {
-    v: 1, color: mkState.color, custom: mkState.custom, talla: mkState.talla, nextId: mkState.nextId,
+    v: 1, color: mkState.color, custom: mkState.custom, talla: mkState.talla, tipo: mkState.tipo, nextId: mkState.nextId,
     decals: mkState.decals.map(d => ({
       id: d.id, n: d.n, i: idx(d.src), region: d.region, u: d.u, v: d.v, wcm: d.wcm, rot: d.rot,
       locked: !!d.locked, flipX: !!d.flipX, flipY: !!d.flipY, bg: d.bg || null
@@ -1488,6 +1487,7 @@ async function mkApplyData(data, meta, curId) {
   mkState.decals = decals;
   mkState.nextId = Math.max(Number(data.nextId) || 1, decals.reduce((a, d) => Math.max(a, d.id), 0) + 1);
   mkState.sel = decals.length ? decals[decals.length - 1].id : null;
+  mkState.tipo = typeof data.tipo === 'string' && tiposPrenda.indexOf(data.tipo) >= 0 ? data.tipo : 'Playera Cuello Redondo Manga Corta';
   mkState.pick = false;
   mkState.curId = curId || null;
   mkState.meta = { nombre: (meta && meta.nombre) || '', cliente: (meta && meta.cliente) || '', cotId: (meta && meta.cotId) || '' };
