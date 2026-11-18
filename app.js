@@ -159,14 +159,18 @@ function renderHeaderLogo() {
   }
 }
 
-const THEMES = ['aventura', 'light', 'dark'];
-const THEME_ICON = { aventura: '\u2693', light: '\u25D0', dark: '\u25D1' };
+const THEMES = ['aventura', 'light', 'dark', 'navidad', 'halloween'];
+const THEME_ICON = { aventura: '\u2693', light: '\u25D0', dark: '\u25D1', navidad: '\uD83C\uDF84', halloween: '\uD83C\uDF83' };
+const THEME_COLOR = { aventura: '#2a9fd6', navidad: '#b3202e', halloween: '#d9590c' };
 
 function applyTheme(mode) {
-  document.body.classList.toggle('dark', mode === 'dark');
+  // Halloween es un tema oscuro: usa "dark" para que las gráficas y los colores base también se oscurezcan.
+  document.body.classList.toggle('dark', mode === 'dark' || mode === 'halloween');
   document.body.classList.toggle('adventure', mode === 'aventura');
+  document.body.classList.toggle('xmas', mode === 'navidad');
+  document.body.classList.toggle('halloween', mode === 'halloween');
   document.getElementById('themeButton').textContent = THEME_ICON[mode];
-  document.querySelector('meta[name="theme-color"]').content = mode === 'aventura' ? '#2a9fd6' : '#6d5dfc';
+  document.querySelector('meta[name="theme-color"]').content = THEME_COLOR[mode] || '#6d5dfc';
 }
 
 function currentTheme() {
@@ -1591,6 +1595,8 @@ async function checkForUpdate(manual) {
 
 function showUpdate() {
   if (updShown) return;
+  // Justo después de actualizar no se vuelve a avisar (evita que la ventana salga dos veces).
+  try { if (Date.now() - Number(sessionStorage.getItem('__upd_done') || 0) < 2 * 60 * 1000) return; } catch (e) {}
   updShown = true;
   document.getElementById('updName').textContent = brand.name;
   document.getElementById('updLogo').src = logo || DEFAULT_LOGO;
@@ -1608,6 +1614,7 @@ async function applyUpdate() {
   const btn = document.getElementById('updBtn');
   btn.disabled = true;
   btn.textContent = 'Actualizando\u2026';
+  try { sessionStorage.setItem('__upd_done', String(Date.now())); } catch (e) {}
   try { store.setItem('__build', updHash || await buildHash()); await store.flush(); } catch (e) {}
   try {
     const regs = await navigator.serviceWorker.getRegistrations();
@@ -1622,7 +1629,7 @@ async function applyUpdate() {
 
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   const hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) showUpdate(); });
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) checkForUpdate(); });
   navigator.serviceWorker.register('sw.js').then(reg => reg.update()).catch(() => {});
 }
 if ('Notification' in window && Notification.permission === 'granted') enableUpdateNotifications(false);  // renueva la revision en segundo plano

@@ -850,3 +850,98 @@ body.adventure:not(.dark) .section-label { color: #7a5a32; }
 
 /* La cotización exportada no hereda bordes del tema de la app */
 #pdfArea td, #pdfArea th { border: 0; }
+
+
+/* ===== Tema Navidad: nieve, rojo y verde ===== */
+body.xmas {
+  --bg: #cfe9db; --surface: #ffffff; --surface-2: #f1f8f3; --text: #1c2b22; --muted: #5d7767; --border: #cfe3d6;
+  --primary: #a31524; --primary-hover: #7d0f1c; --accent: #c8202b;
+  --shadow: 0 10px 24px rgba(31, 90, 58, .16), 0 1px 0 rgba(255, 255, 255, .8) inset;
+  background: radial-gradient(800px 380px at 85% -6%, rgba(255, 255, 255, .85), transparent 62%),
+    linear-gradient(180deg, #a9d9bf 0, #d7eee0 38%, #f8e6e6 100%) fixed;
+}
+body.xmas::before, body.xmas::after {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+body.xmas::before {
+  background-image:
+    radial-gradient(3px 3px at 20px 30px, #fff, transparent), radial-gradient(2px 2px at 70px 110px, #fff, transparent),
+    radial-gradient(4px 4px at 130px 170px, #fff, transparent), radial-gradient(2px 2px at 190px 60px, #fff, transparent),
+    radial-gradient(3px 3px at 240px 220px, #fff, transparent), radial-gradient(2px 2px at 40px 250px, #fff, transparent);
+  background-size: 260px 280px; animation: snowFall 18s linear infinite;
+}
+body.xmas::after {
+  background-image:
+    radial-gradient(5px 5px at 50px 60px, rgba(255,255,255,.9), transparent), radial-gradient(3px 3px at 150px 20px, rgba(255,255,255,.9), transparent),
+    radial-gradient(4px 4px at 210px 140px, rgba(255,255,255,.9), transparent), radial-gradient(3px 3px at 90px 200px, rgba(255,255,255,.9), transparent);
+  background-size: 320px 340px; animation: snowFall 30s linear infinite reverse;
+}
+@keyframes snowFall { to { background-position: 40px 340px; } }
+body.xmas .app-shell { position: relative; z-index: 1; }
+body.xmas:not(.dark) .topbar {
+  background: linear-gradient(160deg, #e0404d 0%, #b3202e 55%, #7d0f1c 100%);
+  border-bottom: 4px solid #2e9d5a; box-shadow: 0 12px 26px rgba(125, 15, 28, .32);
+}
+body.xmas:not(.dark) .card, body.xmas:not(.dark) .home-card, body.xmas:not(.dark) .modal-box {
+  background: linear-gradient(180deg, #ffffff, #f3faf5); border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+body.xmas:not(.dark) .card { border-radius: 24px; }
+body.xmas .home-card { transition: transform .18s ease, box-shadow .18s ease; }
+body.xmas .hc-ico { box-shadow: 0 6px 12px rgba(0, 0, 0, .22), 0 -3px 0 rgba(0, 0, 0, .16) inset; }
+body.xmas:not(.dark) .btn-primary, body.xmas:not(.dark) .btn-accent {
+  background: linear-gradient(180deg, #e0404d, #a31524); color: #fff; border: 0;
+  box-shadow: 0 4px 0 #6f0f1b, 0 10px 16px rgba(125, 15, 28, .28);
+}
+body.xmas:not(.dark) .btn-primary:active { transform: translateY(3px); box-shadow: 0 1px 0 #6f0f1b; }
+body.xmas:not(.dark) .btn-light { background: #e6f4eb; color: var(--text); border: 1px solid var(--border); box-shadow: 0 3px 0 #b7d6c3; }
+body.xmas:not(.dark) input:not([type=range]):not([type=color]), body.xmas:not(.dark) select,
+body.xmas:not(.dark) textarea, body.xmas:not(.dark) .select-button { background: #fff; border: 1px solid var(--border); }
+body.xmas:not(.dark) .page-heading h1 { color: #8c1422; text-shadow: 0 2px 0 rgba(255, 255, 255, .8); }
+body.xmas:not(.dark) .section-label { color: #2e7d4f; }
+body.xmas .footer-note { position: relative; z-index: 1; }
+
+/* ===== Tema Halloween: noche, calabaza y murciélagos (oscuro) ===== */
+body.halloween {
+  --bg: #130b1b; --surface: #1d1328; --surface-2: #281a37; --text: #f5edf9; --muted: #bba5cc; --border: #3d2852;
+  --primary: #ff8a1f; --primary-hover: #ffa24d; --accent: #ff8a1f;
+  --shadow: 0 10px 26px rgba(0, 0, 0, .45);
+  background: radial-gradient(520px 520px at 88% 4%, rgba(255, 170, 70, .26), transparent 62%),
+    radial-gradient(900px 400px at 10% 110%, rgba(122, 42, 140, .35), transparent 62%),
+    linear-gradient(180deg, #1c1029 0, #110a19 100%) fixed;
+}
+body.halloween::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 90px; z-index: 0; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 90' preserveAspectRatio='none'%3E%3Cpath d='M0 90 V60 L12 30 L24 58 L38 20 L52 56 L66 36 L80 62 L96 26 L110 58 L126 34 L140 62 L156 22 L170 58 L186 38 L200 62 L216 28 L230 58 L246 34 L260 62 L276 24 L290 58 L300 44 V90Z' fill='%23070310'/%3E%3C/svg%3E") repeat-x bottom / 300px 90px;
+}
+body.halloween::after {
+  content: ""; position: fixed; left: -80px; top: 110px; width: 70px; height: 26px; z-index: 0; pointer-events: none; opacity: .5;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 24'%3E%3Cpath d='M0 8 Q10 0 20 8 Q25 3 30 9 Q35 3 40 8 Q50 0 60 8 Q50 8 42 20 Q36 13 30 21 Q24 13 18 20 Q10 8 0 8Z' fill='%23c9a9ec'/%3E%3C/svg%3E") no-repeat center / contain;
+  animation: batFly 26s linear infinite;
+}
+@keyframes batFly {
+  0% { transform: translate(0, 0); } 25% { transform: translate(30vw, 40px) scale(.9); }
+  50% { transform: translate(65vw, -10px); } 75% { transform: translate(95vw, 50px) scale(1.1); }
+  100% { transform: translate(125vw, 10px); }
+}
+body.halloween .app-shell { position: relative; z-index: 1; }
+body.halloween .topbar {
+  background: linear-gradient(160deg, #ff9a2e 0%, #d9590c 55%, #7a2a8c 100%);
+  border-bottom: 3px solid #6a2c91; box-shadow: 0 12px 28px rgba(217, 89, 12, .28);
+}
+body.halloween .card, body.halloween .home-card, body.halloween .modal-box {
+  background: linear-gradient(180deg, #251833, #1b1127); border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+body.halloween .card { border-radius: 24px; }
+body.halloween .home-card { transition: transform .18s ease, box-shadow .18s ease; }
+body.halloween .hc-ico { box-shadow: 0 6px 12px rgba(0, 0, 0, .4), 0 -3px 0 rgba(0, 0, 0, .25) inset; }
+body.halloween .btn-primary, body.halloween .btn-accent {
+  background: linear-gradient(180deg, #ff9a2e, #d9590c); color: #1a0f26; border: 0; font-weight: 800;
+  box-shadow: 0 4px 0 #8a3406, 0 10px 16px rgba(217, 89, 12, .28);
+}
+body.halloween .btn-primary:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a3406; }
+body.halloween .btn-light { background: #2c1d3d; color: var(--text); border: 1px solid var(--border); box-shadow: 0 3px 0 #170e22; }
+body.halloween .page-heading h1 { color: #ffb066; text-shadow: 0 0 14px rgba(255, 138, 31, .35); }
+body.halloween .footer-note { position: relative; z-index: 1; padding-bottom: 90px; }
+@media (prefers-reduced-motion: reduce) {
+  body.xmas::before, body.xmas::after, body.halloween::after { animation: none; }
+}
