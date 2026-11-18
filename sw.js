@@ -1,14 +1,11 @@
 const CACHE = 'valyra-4.0.0'; // sube este numero junto con APP_VERSION en js/app.js
-const LOCAL = ['./', 'index.html', 'manifest.webmanifest', 'css/app.css', 'js/store.js', 'js/app.js', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
-// Librerias propias (opcionales: si no existen en libs/, se usan las del CDN)
-const LIBS = ['libs/html2pdf.bundle.min.js', 'libs/chart.umd.min.js', 'libs/exceljs.min.js'];
+const LOCAL = ['./', 'index.html', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
 const REMOTE = ['https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     await cache.addAll(LOCAL);
-    await Promise.all(LIBS.map(async url => { try { const r = await fetch(url); if (r.ok) await cache.put(url, r); } catch (e) {} }));
     await Promise.all(REMOTE.map(async url => {
       try { await cache.put(url, await fetch(url, { mode: 'no-cors' })); } catch (e) {}
     }));
@@ -45,7 +42,7 @@ self.addEventListener('fetch', event => {
 
 
 // ---------- Aviso de actualizacion cuando la app no se esta usando ----------
-const WATCH = ['index.html', 'css/app.css', 'js/store.js', 'js/app.js', 'manifest.webmanifest', 'logo.png'];
+const WATCH = ['index.html', 'manifest.webmanifest', 'logo.png'];
 
 function idbOpen() {
   return new Promise((resolve, reject) => {
