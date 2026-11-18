@@ -10,6 +10,7 @@ La versión actual está en `version.js` (es el único lugar donde se cambia).
 - `enhancements.js`: mejoras (inventario, tallas agrupadas, precios, finanzas).
 - `version.js`: número de versión y lista de archivos que vigila el aviso de actualización.
 - `sw.js`: service worker (uso sin internet y aviso de actualización).
+- `splash.mp4`: el video que se reproduce al abrir la app (reemplaza la animación anterior).
 - `manifest.webmanifest`, `logo.png`, `icon-*.png`, `screenshots/`: datos e imágenes de la app.
 - `vendor/`: librerías locales (html2pdf, Chart.js, ExcelJS). Ver "Librerías" abajo.
 - `.github/workflows/`: revisiones automáticas de GitHub. `tools/check.js`: la revisión en sí.

@@ -3,7 +3,7 @@ importScripts('version.js');                       // define VALYRA_VERSION y VA
 const CACHE = 'valyra-' + self.VALYRA_VERSION;
 const LOCAL = [
   './', 'index.html', 'styles.css', 'storage.js', 'app.js', 'enhancements.js', 'version.js',
-  'manifest.webmanifest', 'logo.png', 'splash-base.png', 'splash-moon.png', 'splash-owl.png', 'splash-owl-color.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'
+  'manifest.webmanifest', 'logo.png', 'splash.mp4', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'
 ];
 // Librerias: se prefiere la copia local (vendor/); si no existe, se usa el CDN.
 const LIBS = [
@@ -56,8 +56,24 @@ async function addEnhancements(response) {
   return new Response(updated, { status: response.status, statusText: response.statusText, headers });
 }
 
+// El video necesita respuestas parciales (Range); se sirve desde el caché con ese soporte.
+async function serveVideo(request) {
+  const cache = await caches.open(CACHE);
+  const hit = await cache.match('splash.mp4');
+  if (!hit) return fetch(request);
+  const buf = await hit.arrayBuffer();
+  const type = { 'Content-Type': 'video/mp4', 'Accept-Ranges': 'bytes' };
+  const m = /bytes=(\d*)-(\d*)/.exec(request.headers.get('range') || '');
+  if (!m) return new Response(buf, { status: 200, headers: Object.assign({ 'Content-Length': buf.byteLength }, type) });
+  const start = m[1] === '' ? Math.max(buf.byteLength - Number(m[2]), 0) : Number(m[1]);
+  const end = m[1] === '' || m[2] === '' ? buf.byteLength - 1 : Math.min(Number(m[2]), buf.byteLength - 1);
+  return new Response(buf.slice(start, end + 1), { status: 206, headers: Object.assign({
+    'Content-Range': 'bytes ' + start + '-' + end + '/' + buf.byteLength, 'Content-Length': end - start + 1 }, type) });
+}
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).searchParams.has('chk')) return;
+  if (new URL(event.request.url).pathname.endsWith('/splash.mp4')) { event.respondWith(serveVideo(event.request)); return; }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(event.request, { ignoreSearch: true }) ||
