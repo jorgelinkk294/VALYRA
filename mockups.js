@@ -257,7 +257,9 @@ function mkPickGenero(id) {
 }
 function mkPickTipo(v) {
   if (tiposPrenda.indexOf(v) < 0 || v === mkState.tipo) return;
+  mkCommit();                       // el modelo cambia de medidas: las imagenes se reacomodan
   mkState.tipo = v;
+  if (mk && mk.shirt) mkBuildShirt();
   mkRefresh();
   mkChanged();
 }
@@ -760,6 +762,7 @@ function mkPaint(name) {
   const offs = mkIsSleeve(name) ? [-R.wCm, 0, R.wCm] : [0];
   mkState.decals.filter(d => d.region === name).forEach(d => mkDrawDecal(ctx, d, k, offs));
   if (R.fabric) ctx.drawImage(R.fabric, 0, 0);          // arrugas y costuras por encima de la imagen
+  if (name === 'front' && mk.shape && mk.geo) mkDetailsFront(R);   // cangurera, cierre, botones
   const s = mkSelDecal();
   const mine = s && s.region === name ? s : null;
   if (mkState.guides && !mk.noSel && !mkIsSleeve(name)) mkDrawGuides(R, mine);
@@ -776,14 +779,14 @@ function mkPaint(name) {
       ctx.restore();
     });
   }
+  if (name === 'front' && mk.shape && mk.geo) mkCutNeck(R);     // recorte del cuello (V o redondo)
   R.tex.needsUpdate = true;
 }
 function mkPaintAll() {
   if (!mk) return;
   Object.keys(mk.regions).forEach(mkPaint);
   const base = mkFill();
-  if (mk.yokeMat) mk.yokeMat.color.set(base).convertSRGBToLinear();
-  if (mk.collarMat) mk.collarMat.color.set(mkShade(base, -0.14)).convertSRGBToLinear();
+  (mk.tints || []).forEach(m => m.color.set(mkShade(base, m.userData.tint || 0)).convertSRGBToLinear());
 }
 
 // ---------- Escena 3D ----------
@@ -869,7 +872,7 @@ function mkPanelGeometry(sign, a, b, H, topY) {
 }
 
 // Textura de las costillas del cuello (rayitas finas)
-function mkRibTexture() {
+function mkRibTexture(rep) {
   const T = mk.T;
   const c = document.createElement('canvas');
   c.width = 128; c.height = 8;
@@ -881,13 +884,115 @@ function mkRibTexture() {
   const tex = new T.CanvasTexture(c);
   tex.wrapS = T.RepeatWrapping;
   tex.wrapT = T.RepeatWrapping;
-  tex.repeat.set(70, 1);
+  tex.repeat.set(rep || 70, 1);
   tex.encoding = T.sRGBEncoding;
   return tex;
 }
 
+// Forma de la prenda segun el "tipo de prenda" elegido
+function mkShapeOf(tipo) {
+  const t = String(tipo || '');
+  const sweat = /^Sudadera/.test(t), hood = /Capucha/.test(t), v = /Cuello V/.test(t), placket = /Polo|^Camisa/.test(t);
+  let neck = null;                         // null = cuello redondo normal (sin recorte)
+  if (v) neck = { type: 'v', depth: 0.2, rim: 1.2 };
+  else if (hood) neck = { type: 'round', depth: 0.09, rim: 2.2 };
+  else if (sweat) neck = { type: 'round', depth: 0.05, rim: 1.8 };
+  else if (placket) neck = { type: 'round', depth: 0.035, rim: 1.3 };
+  return {
+    sweat, hood, v, placket, neck,
+    pocket: /Cangurera/.test(t), zip: /Cierre/.test(t),
+    long: sweat || /Manga Larga/.test(t),
+    collarR: hood ? 2.0 : sweat ? 1.7 : placket ? 1.1 : 0.9
+  };
+}
+
+// Posicion horizontal (px) en el lienzo del pecho para una x del modelo (la media elipse no es lineal)
+function mkArcPx(R, x) {
+  const g = mk.geo;
+  const phi = Math.asin(Math.max(-1, Math.min(1, x / g.a)));
+  const n = 40;
+  let s = 0;
+  for (let i = 0; i < n; i++) { const q = phi * (i + 0.5) / n; s += Math.hypot(g.a * Math.cos(q), g.b * Math.sin(q)) * phi / n; }
+  return (R.wCm / 2 + s) * R.k;
+}
+// Fondo del cuello (px desde arriba del lienzo)
+function mkNeckBottomPx(R) {
+  const g = mk.geo, n = mk.shape.neck;
+  return g.slope * Math.pow(g.na / g.a, 1.6) * R.k + (n ? n.depth * g.H * R.k : 0);
+}
+
+// Detalles pintados en el frente: cangurera, cierre y botones
+function mkDetailsFront(R) {
+  const sh = mk.shape, g = mk.geo, ctx = R.ctx, k = R.k;
+  const X = x => mkArcPx(R, x), Y = y => (g.H / 2 - y) * k;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (sh.pocket) {
+    const top = -g.H / 2 + 0.40 * g.H, bot = -g.H / 2 + 0.085 * g.H;
+    const pts = [[-0.52 * g.a, bot], [-0.40 * g.a, top], [0.40 * g.a, top], [0.52 * g.a, bot]];
+    const draw = (dy) => { ctx.beginPath(); pts.forEach((q, i) => { const px = X(q[0]), py = Y(q[1]) + dy; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }); };
+    draw(0); ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = Math.max(1, 0.2 * k); draw(Math.max(1.5, 0.22 * k)); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.42)'; ctx.lineWidth = Math.max(2, 0.22 * k); draw(0); ctx.stroke();
+  }
+  if (sh.zip) {
+    const x = X(0), y0 = mkNeckBottomPx(R), y1 = Y(-g.H / 2 + 0.075 * g.H);
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = Math.max(2, 0.5 * k);
+    ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = Math.max(1, 0.2 * k); ctx.setLineDash([0.35 * k, 0.35 * k]);
+    ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#c9ccd2'; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = Math.max(1, 0.15 * k);
+    ctx.beginPath(); ctx.rect(x - 0.45 * k, y0 + 0.3 * k, 0.9 * k, 2.4 * k); ctx.fill(); ctx.stroke();
+  }
+  if (sh.placket) {
+    const y0 = mkNeckBottomPx(R), len = 14 * k, xl = X(-1.2), xr = X(1.2);
+    ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(xl, y0, xr - xl, len);
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = Math.max(1.5, 0.12 * k);
+    ctx.beginPath(); ctx.moveTo(xl, y0); ctx.lineTo(xl, y0 + len); ctx.moveTo(xr, y0); ctx.lineTo(xr, y0 + len); ctx.stroke();
+    for (let i = 0; i < 3; i++) {
+      const cy = y0 + (2.4 + 4.6 * i) * k;
+      ctx.beginPath(); ctx.arc((xl + xr) / 2, cy, 0.5 * k, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = Math.max(1, 0.12 * k); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// Recorte del cuello en el frente: se borra la textura (transparente) y se pinta el acanalado en el borde
+function mkCutNeck(R) {
+  const sh = mk.shape, g = mk.geo, ctx = R.ctx, k = R.k;
+  if (!sh.neck) return;
+  const edge = g.slope * Math.pow(g.na / g.a, 1.6) * k, D = sh.neck.depth * g.H * k, N = 28, pts = [];
+  for (let i = 0; i <= N; i++) {
+    const x = -g.na + 2 * g.na * i / N, t = x / g.na;
+    const f = sh.neck.type === 'v' ? 1 - Math.abs(t) : Math.sqrt(Math.max(0, 1 - t * t));
+    pts.push([mkArcPx(R, x), edge + D * f]);
+  }
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = mkShade(mkFill(), -0.14);
+  ctx.lineWidth = 2 * sh.neck.rim * k;
+  ctx.beginPath();
+  pts.forEach((q, i) => { if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
+  ctx.stroke();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], -2 * k);
+  pts.forEach(q => ctx.lineTo(q[0], q[1]));
+  ctx.lineTo(pts[N][0], -2 * k);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 function mkBuildShirt() {
   const T = mk.T;
+  const sh = mkShapeOf(mkState.tipo);
+  mk.shape = sh;
   const oldDims = {};
   Object.keys(mk.regions).forEach(n => { oldDims[n] = { w: mk.regions[n].wCm, h: mk.regions[n].hCm }; });
   if (mk.shirt) {
@@ -898,11 +1003,18 @@ function mkBuildShirt() {
     });
   }
   mk.regions = {};
+  mk.tints = [];
   const shirt = new T.Group();
   const pecho = mkPecho[mkState.talla];
   const a = pecho / 2, b = a * 0.42, H = pecho * 1.28, slope = 0.10 * H;
   const topY = x => H / 2 - slope * Math.pow(Math.min(1, Math.abs(x) / a), 1.6);
-  const mkMat = R => new T.MeshStandardMaterial({ map: R.tex, roughness: 0.9, metalness: 0, side: T.DoubleSide });
+  const na = (sh.hood ? 0.19 : sh.sweat ? 0.175 : 0.17) * pecho, nb = b * 0.7;
+  mk.geo = { a, b, H, slope, na };
+  // Materiales que toman el color de la prenda (f = cuanto mas oscuro o claro)
+  const tint = (m, f) => { m.userData.tint = f; mk.tints.push(m); return m; };
+  const plainMat = f => tint(new T.MeshStandardMaterial({ roughness: 0.92, metalness: 0, side: T.DoubleSide }), f);
+  const ribMat = (n, f) => tint(new T.MeshStandardMaterial({ roughness: 0.95, metalness: 0, side: T.DoubleSide, map: mkRibTexture(n) }), f == null ? -0.14 : f);
+  const mkMat = R => new T.MeshStandardMaterial({ map: R.tex, roughness: 0.9, metalness: 0, side: T.DoubleSide, alphaTest: 0.5 });
   const addRegion = (name, wCm, hCm, geo) => {
     const R = mkRegion(name, wCm, hCm);
     R.mesh = new T.Mesh(geo, mkMat(R));
@@ -918,20 +1030,40 @@ function mkBuildShirt() {
   const back = mkPanelGeometry(-1, a, b, H, topY);
   addRegion('back', back.wCm, H, back.geo);
 
-  // Mangas
-  const rs = 0.125 * pecho, rc = 0.11 * pecho, L = 0.32 * pecho, tilt = 25 * Math.PI / 180;
+  // Mangas (cortas o largas; la sudadera lleva punos acanalados)
+  const rs = (sh.sweat ? 0.14 : 0.125) * pecho;
+  const rc = (sh.long ? (sh.sweat ? 0.085 : 0.08) : 0.11) * pecho;
+  const L = (sh.long ? (sh.sweat ? 1.1 : 1.06) : 0.32) * pecho;
+  const tilt = (sh.long ? 52 : 25) * Math.PI / 180;
   [['sleeveL', 1], ['sleeveR', -1]].forEach(([name, side]) => {
     const geo = new T.CylinderGeometry(rc, rs, L, 32, 8, true);
     const R = addRegion(name, 2 * Math.PI * (rs + rc) / 2, L, geo);
     const sx = side * 0.88 * a;
     const sy = topY(sx) - 0.07 * H;
     const dx = side * Math.cos(tilt), dy = -Math.sin(tilt);
-    R.mesh.rotation.z = side > 0 ? -(Math.PI / 2 + tilt) : (Math.PI / 2 + tilt);
+    const rz = side > 0 ? -(Math.PI / 2 + tilt) : (Math.PI / 2 + tilt);
+    R.mesh.rotation.z = rz;
     R.mesh.position.set(sx + dx * L / 2, sy + dy * L / 2, 0);
+    if (sh.sweat) {
+      const hc = 0.1 * pecho, d = L - hc / 2 + 0.2;
+      const cuff = new T.Mesh(new T.CylinderGeometry(rc * 1.04, rc * 1.04, hc, 28, 1, true), ribMat(Math.round(2 * Math.PI * rc / 0.55)));
+      cuff.rotation.z = rz;
+      cuff.position.set(sx + dx * d, sy + dy * d, 0);
+      shirt.add(cuff);
+    }
   });
 
-  // Hombros (anillo entre el borde de la camisa y el cuello) y cuello
-  const na = 0.17 * pecho, nb = b * 0.7, inner = [], NR = 64;
+  // Dobladillo acanalado de la sudadera
+  if (sh.sweat) {
+    const hh = 0.075 * H;
+    const hem = new T.Mesh(new T.CylinderGeometry(1, 1, hh, 96, 1, true), ribMat(230));
+    hem.scale.set(a * 1.02, 1, b + 0.9);
+    hem.position.y = -H / 2 + hh / 2 - 0.05;
+    shirt.add(hem);
+  }
+
+  // Hombros (anillo entre el borde de la prenda y el cuello) y cuello
+  const inner = [], NR = 64;
   const pos = [], idx = [];
   for (let i = 0; i <= NR; i++) {
     const th = Math.PI * 2 * i / NR;
@@ -950,18 +1082,33 @@ function mkBuildShirt() {
   yg.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
   yg.setIndex(idx);
   yg.computeVertexNormals();
-  mk.yokeMat = new T.MeshStandardMaterial({ roughness: 0.9, metalness: 0, side: T.DoubleSide });
-  shirt.add(new T.Mesh(yg, mk.yokeMat));
-  const collar = new T.TubeGeometry(new T.CatmullRomCurve3(inner.slice(0, NR), true), 64, 0.9, 8, true);
-  mk.collarMat = new T.MeshStandardMaterial({ roughness: 0.95, metalness: 0, map: mkRibTexture() });
-  shirt.add(new T.Mesh(collar, mk.collarMat));
+  shirt.add(new T.Mesh(yg, plainMat(0)));
+  // Cuello en V: el acanalado del frente va pintado, aqui solo queda el de la espalda
+  const cpts = sh.v ? inner.slice(NR / 2, NR + 1) : inner.slice(0, NR);
+  const collar = new T.TubeGeometry(new T.CatmullRomCurve3(cpts, !sh.v), 64, sh.collarR, 8, !sh.v);
+  shirt.add(new T.Mesh(collar, sh.hood ? plainMat(-0.06) : ribMat(70)));
+
+  // Gorro y cordones
+  if (sh.hood) {
+    const hood = new T.Mesh(new T.SphereGeometry(1, 40, 28), plainMat(-0.05));
+    hood.scale.set(0.2 * pecho, 0.23 * pecho, 0.085 * pecho);
+    hood.position.set(0, H / 2 - 0.12 * pecho, -(b + 0.02 * pecho));
+    shirt.add(hood);
+    const cordMat = new T.MeshStandardMaterial({ color: 0xe9e6dd, roughness: 0.8, metalness: 0 });
+    const len = 0.17 * H;
+    [-1, 1].forEach(sd => {
+      const cord = new T.Mesh(new T.CylinderGeometry(0.35, 0.35, len, 8), cordMat);
+      cord.position.set(sd * 0.07 * pecho, H / 2 - 0.04 * H - len / 2, b + 0.9);
+      shirt.add(cord);
+    });
+  }
 
   mk.shirt = shirt;
   mk.root.add(shirt);
   mk.H = H;
-  mk.halfW = a + 0.88 * 0 + L * Math.cos(tilt) + rs * 0.4;
+  mk.halfW = a + L * Math.cos(tilt) + rs * 0.4;
 
-  // Al cambiar de talla las imagenes conservan su posicion relativa
+  // Al cambiar de talla o de prenda las imagenes conservan su posicion relativa
   mkState.decals.forEach(d => {
     const o = oldDims[d.region], n = mk.regions[d.region];
     if (o && n) { d.u *= n.wCm / o.w; d.v *= n.hCm / o.h; d.wcm = Math.min(d.wcm, Math.max(4, n.wCm)); }
@@ -1483,11 +1630,14 @@ async function mkApplyData(data, meta, curId) {
   mkState.sel = null;
   mkState.color = mkClamp(Number(data.color) || 0, 0, mkHex.length - 1);
   mkState.custom = typeof data.custom === 'string' && /^#[0-9a-f]{6}$/i.test(data.custom) ? data.custom : null;
-  if (mk && mk.shirt && talla !== mkState.talla) { mkState.talla = talla; mkBuildShirt(); } else mkState.talla = talla;
+  const tipo = typeof data.tipo === 'string' && tiposPrenda.indexOf(data.tipo) >= 0 ? data.tipo : 'Playera Cuello Redondo Manga Corta';
+  const cambio = talla !== mkState.talla || tipo !== mkState.tipo;
+  mkState.talla = talla;
+  mkState.tipo = tipo;
+  if (mk && mk.shirt && cambio) mkBuildShirt();
   mkState.decals = decals;
   mkState.nextId = Math.max(Number(data.nextId) || 1, decals.reduce((a, d) => Math.max(a, d.id), 0) + 1);
   mkState.sel = decals.length ? decals[decals.length - 1].id : null;
-  mkState.tipo = typeof data.tipo === 'string' && tiposPrenda.indexOf(data.tipo) >= 0 ? data.tipo : 'Playera Cuello Redondo Manga Corta';
   mkState.pick = false;
   mkState.curId = curId || null;
   mkState.meta = { nombre: (meta && meta.nombre) || '', cliente: (meta && meta.cliente) || '', cotId: (meta && meta.cotId) || '' };
