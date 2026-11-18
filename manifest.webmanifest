@@ -8,8 +8,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f3f5f9",
-  "theme_color": "#111827",
+  "background_color": "#f3f1ff",
+  "theme_color": "#6d5dfc",
   "icons": [
     {
       "src": "icon-192.png",
@@ -34,5 +34,7 @@
     "business",
     "finance",
     "productivity"
-  ]
+  ],
+  "dir": "ltr",
+  "prefer_related_applications": false
 }

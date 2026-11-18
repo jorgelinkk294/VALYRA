@@ -1274,7 +1274,7 @@
     
       <div class="section-label">Aplicaci&#xF3;n</div>
       <div class="card">
-        <p style="margin:0 0 10px;font-size:13px;color:var(--muted)">Si publicaste cambios en Netlify, toca el bot&#xF3;n para buscarlos ahora.</p>
+        <p style="margin:0 0 10px;font-size:13px;color:var(--muted)">Si publicaste cambios en GitHub, toca el bot&#xF3;n para buscarlos ahora.</p>
         <button class="btn btn-primary" onclick="checkForUpdate(true)">Buscar actualizaciones</button>
         <button class="btn btn-light" onclick="enableUpdateNotifications(true)">Activar avisos de actualizaci&#xF3;n</button>
       </div>
@@ -1474,7 +1474,7 @@
 </script>
 <script type="text/plain" id="appSrc">
 'use strict';
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.0.1';
 
 // ---------- Diálogos propios (en lugar de alert/confirm del navegador) ----------
 let dlgQueue = Promise.resolve();
@@ -2938,7 +2938,7 @@ async function restoreBackup() {
 }
 
 // ---------- Actualizaciones automaticas ----------
-// Detecta cualquier cambio que subas a Netlify (compara una huella de los archivos de la app)
+// Detecta cualquier cambio que subas a GitHub (compara una huella de los archivos de la app)
 // y muestra la ventana "Actualizar APK" con el logo. No hace falta cambiar numeros de version.
 const WATCH_FILES = ['index.html', 'manifest.webmanifest', 'logo.png'];
 let updShown = false;
@@ -3006,7 +3006,7 @@ async function checkForUpdate(manual) {
     const saved = store.getItem('__build');
     if (!saved) {                                           // primera vez: solo guarda la huella
       store.setItem('__build', h);
-      if (manual === true) uiAlert('Listo. Esta es la versi\u00F3n ' + APP_VERSION + '. Cuando publiques cambios en Netlify aparecer\u00E1 la ventana de actualizaci\u00F3n.');
+      if (manual === true) uiAlert('Listo. Esta es la versi\u00F3n ' + APP_VERSION + '. Cuando publiques cambios en GitHub aparecer\u00E1 la ventana de actualizaci\u00F3n.');
       return;
     }
     if (saved !== h) { updHash = h; showUpdate(); if (document.hidden) pingSW(); return; }

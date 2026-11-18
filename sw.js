@@ -1,4 +1,4 @@
-const CACHE = 'valyra-4.0.0'; // sube este numero junto con APP_VERSION en js/app.js
+const CACHE = 'valyra-4.0.1'; // sube este numero junto con APP_VERSION en index.html
 const LOCAL = ['./', 'index.html', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
 const REMOTE = ['https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
 
