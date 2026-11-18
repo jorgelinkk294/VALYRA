@@ -159,21 +159,30 @@ function renderHeaderLogo() {
   }
 }
 
+const THEMES = ['aventura', 'light', 'dark'];
+const THEME_ICON = { aventura: '\u2693', light: '\u25D0', dark: '\u25D1' };
+
+function applyTheme(mode) {
+  document.body.classList.toggle('dark', mode === 'dark');
+  document.body.classList.toggle('adventure', mode === 'aventura');
+  document.getElementById('themeButton').textContent = THEME_ICON[mode];
+  document.querySelector('meta[name="theme-color"]').content = mode === 'aventura' ? '#2a9fd6' : '#6d5dfc';
+}
+
+function currentTheme() {
+  let mode = 'aventura';
+  try { mode = store.getItem('valyra_theme') || 'aventura'; } catch (e) {}
+  return THEMES.indexOf(mode) >= 0 ? mode : 'aventura';
+}
+
 function toggleTheme() {
-  const dark = document.body.classList.toggle('dark');
-  document.getElementById('themeButton').textContent = dark ? '\u25D1' : '\u25D0';
-  document.querySelector('meta[name="theme-color"]').content = '#6d5dfc';
-  try { store.setItem('valyra_theme', dark ? 'dark' : 'light'); } catch (e) {}
+  const mode = THEMES[(THEMES.indexOf(currentTheme()) + 1) % THEMES.length];
+  try { store.setItem('valyra_theme', mode); } catch (e) {}
+  applyTheme(mode);
   if (!document.getElementById('tabFin').classList.contains('hidden')) drawChart();
 }
 
-function loadTheme() {
-  let mode = 'light';
-  try { mode = store.getItem('valyra_theme') || 'light'; } catch (e) {}
-  if (mode === 'dark') document.body.classList.add('dark');
-  document.getElementById('themeButton').textContent = mode === 'dark' ? '\u25D1' : '\u25D0';
-  document.querySelector('meta[name="theme-color"]').content = '#6d5dfc';
-}
+function loadTheme() { applyTheme(currentTheme()); }
 
 // ---------- Gesto / boton "atras" de Android ----------
 // Cada seccion y cada ventana abierta usan el historial del navegador, asi que el gesto de las orillas
@@ -508,13 +517,27 @@ function calc() {
   document.getElementById('saldo').textContent = money(saldoDe(t.total));
 }
 
-function buildHTML() {
+// ---------- Diseños de cotización ----------
+const QUOTE_DESIGNS = {
+  clasico:  { name: 'Clásico', font: 'Arial,sans-serif', bg: '#fff', ink: '#111827', mute: '#667085', accent: '#111827', rule: '#e5e7eb', zebra: '' },
+  moderno:  { name: 'Moderno', font: 'Arial,sans-serif', bg: '#fff', ink: '#1f2340', mute: '#6b7194', accent: '#6d5dfc', rule: '#e6e3ff', zebra: '#f6f4ff', band: 'linear-gradient(135deg,#7c6cff,#4237bf)', bandInk: '#fff', th: true },
+  minimal:  { name: 'Minimal', font: 'Helvetica,Arial,sans-serif', bg: '#fff', ink: '#222', mute: '#9aa0a6', accent: '#222', rule: '#eee', zebra: '', light: true, title: true },
+  elegante: { name: 'Elegante', font: 'Georgia,serif', bg: '#fffdf8', ink: '#1c1917', mute: '#78716c', accent: '#b8892b', rule: '#eadfc8', zebra: '#faf5e8', band: '#1c1917', bandInk: '#e7c873', th: true, title: true },
+  dtf:      { name: 'Color DTF', font: 'Arial,sans-serif', bg: '#fff', ink: '#2a1a24', mute: '#8b6b7b', accent: '#ec4899', rule: '#fde2ee', zebra: '#fff5f9', band: 'linear-gradient(120deg,#ec4899,#f59e0b)', bandInk: '#fff', th: true },
+  mapa:     { name: 'Mapa del tesoro', font: 'Georgia,serif', bg: '#f4e4bb', ink: '#3a2614', mute: '#8a6b45', accent: '#9c3b1b', rule: '#d9c08a', zebra: '#ecd9a8', frame: '5px double #7a4a21', title: true }
+};
+let qDesign = 'clasico';
+try { qDesign = store.getItem('valyra_qdesign') || 'clasico'; } catch (e) {}
+if (!QUOTE_DESIGNS[qDesign]) qDesign = 'clasico';
+
+function buildHTML(designKey) {
+  const d = QUOTE_DESIGNS[designKey || qDesign] || QUOTE_DESIGNS.clasico;
   const cliente = esc(document.getElementById('cliente').value || 'Cliente');
   const fecha = esc(document.getElementById('fecha').value || hoy());
   const t = getTotals();
 
   const rows = productos.map((p, i) => `
-    <tr style="border-bottom:1px solid #e5e7eb">
+    <tr style="border-bottom:1px solid ${d.rule};${d.zebra && i % 2 ? 'background:' + d.zebra : ''}">
       <td style="padding:9px">${i + 1}</td>
       <td style="padding:9px"><b>${esc(p.name)}</b><br><small>${esc(p.talla)} | ${esc(p.prenda)}</small>${posHtml(p)}</td>
       <td style="padding:9px">${p.cant}</td>
@@ -523,36 +546,60 @@ function buildHTML() {
     </tr>
   `).join('');
 
+  const row = (a, b, extraStyle) => `<div style="display:flex;justify-content:space-between;margin-top:5px;${extraStyle || ''}"><span>${a}</span><span>${b}</span></div>`;
   const extra = [
-    t.descuento > 0 ? `<div style="display:flex;justify-content:space-between;margin-top:5px"><span>Descuento (${t.descuento}%)</span><span>-${money(t.descuentoMonto)}</span></div>` : '',
-    t.envio > 0 ? `<div style="display:flex;justify-content:space-between;margin-top:5px"><span>Env\u00EDo</span><span>${money(t.envio)}</span></div>` : '',
+    t.descuento > 0 ? row('Descuento (' + t.descuento + '%)', '-' + money(t.descuentoMonto)) : '',
+    t.envio > 0 ? row('Env\u00EDo', money(t.envio)) : '',
     (getAnticipo(t.total) > 0 && saldoDe(t.total) > 0)
-      ? `<div style="display:flex;justify-content:space-between;margin-top:5px"><span>Anticipo</span><span>${money(getAnticipo(t.total))}</span></div><div style="display:flex;justify-content:space-between;margin-top:5px"><b>Saldo pendiente</b><b>${money(saldoDe(t.total))}</b></div>`
+      ? row('Anticipo', money(getAnticipo(t.total))) + row('<b>Saldo pendiente</b>', '<b>' + money(saldoDe(t.total)) + '</b>')
       : ''
   ].join('');
 
+  const sub = d.band ? 'rgba(255,255,255,.85)' : d.mute;
+  const headBox = d.band
+    ? `background:${d.band};color:${d.bandInk};padding:16px;border-radius:12px`
+    : `border-bottom:${d.light ? 1 : 3}px solid ${d.accent};padding-bottom:12px`;
+  const logoImg = `<img src="${logo || DEFAULT_LOGO}" alt="Logo" style="max-width:160px;max-height:58px;object-fit:contain;${d.band ? 'background:#fff;border-radius:8px;padding:4px' : ''}">`;
+  const th = d.th ? `padding:8px;background:${d.accent};color:#fff` : 'padding:7px';
+
   return `
-    <div id="pdfArea" style="padding:18px;background:#fff;color:#111827;font-family:Arial,sans-serif">
-      <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:3px solid #111827;padding-bottom:12px">
+    <div id="pdfArea" style="padding:18px;background:${d.bg};color:${d.ink};font-family:${d.font};${d.frame ? 'border:' + d.frame + ';' : ''}">
+      ${d.title ? `<div style="font-size:10px;letter-spacing:4px;color:${d.accent};margin-bottom:8px;text-align:center">COTIZACI\u00D3N</div>` : ''}
+      <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;${headBox}">
         <div>
-          ${(logo || DEFAULT_LOGO) ? `<img src="${logo || DEFAULT_LOGO}" alt="Logo" style="max-width:160px;max-height:58px;object-fit:contain">` : `<h1 style="margin:0;font-size:26px">${esc(brand.name)}</h1>`}
-          <div style="font-size:11px;color:#667085;margin-top:4px">${esc(brand.info)}</div>
+          ${(logo || DEFAULT_LOGO) ? logoImg : `<h1 style="margin:0;font-size:26px">${esc(brand.name)}</h1>`}
+          <div style="font-size:11px;color:${sub};margin-top:4px">${esc(brand.info)}</div>
           <div style="font-size:12px;margin-top:8px"><b>Cliente:</b> ${cliente}<br><b>Fecha:</b> ${fecha}</div>
         </div>
-        <div style="text-align:right"><div style="font-size:11px;color:#667085">TOTAL</div><div style="font-size:24px;font-weight:900">${money(t.total)}</div></div>
+        <div style="text-align:right"><div style="font-size:11px;color:${sub}">TOTAL</div><div style="font-size:24px;font-weight:900">${money(t.total)}</div></div>
       </div>
       <table style="width:100%;margin-top:14px;border-collapse:collapse">
-        <thead><tr style="border-bottom:2px solid #111827;text-align:left">
-          <th style="padding:7px">#</th><th style="padding:7px">DESCRIPCI\u00D3N</th><th style="padding:7px">CANT.</th><th style="padding:7px">PRECIO</th><th style="padding:7px">TOTAL</th>
+        <thead><tr style="${d.th ? '' : 'border-bottom:2px solid ' + d.accent + ';'}text-align:left">
+          <th style="${th}">#</th><th style="${th}">DESCRIPCI\u00D3N</th><th style="${th}">CANT.</th><th style="${th}">PRECIO</th><th style="${th}">TOTAL</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <div style="margin-top:14px;padding-top:10px;border-top:2px solid #111827">
-        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+      <div style="margin-top:14px;padding-top:10px;border-top:2px solid ${d.accent}">
+        ${row('Subtotal', money(t.subtotal))}
         ${extra}
-        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:17px;font-weight:900"><span>TOTAL</span><span>${money(t.total)}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:17px;font-weight:900;color:${d.accent}"><span>TOTAL</span><span>${money(t.total)}</span></div>
       </div>
     </div>`;
+}
+
+function renderDesignPicker() {
+  document.getElementById('designPicker').innerHTML = Object.keys(QUOTE_DESIGNS).map(k => {
+    const d = QUOTE_DESIGNS[k];
+    return `<button type="button" class="design-chip${k === qDesign ? ' on' : ''}" onclick="setQuoteDesign('${k}')"><i style="background:${d.band || d.accent}"></i>${d.name}</button>`;
+  }).join('');
+}
+
+function setQuoteDesign(k) {
+  if (!QUOTE_DESIGNS[k]) return;
+  qDesign = k;
+  try { store.setItem('valyra_qdesign', k); } catch (e) {}
+  renderDesignPicker();
+  document.getElementById('livePreview').innerHTML = buildHTML();
 }
 
 function openPreview() {
@@ -560,6 +607,7 @@ function openPreview() {
     alert('Agrega productos antes de revisar la cotizaci\u00F3n.');
     return;
   }
+  renderDesignPicker();
   document.getElementById('livePreview').innerHTML = buildHTML();
   document.getElementById('previewModal').style.display = 'block';
 }

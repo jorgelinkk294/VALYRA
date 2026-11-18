@@ -1,0 +1,29 @@
+name: Descargar librerías
+# Se ejecuta a mano (pestaña Actions > Descargar librerías > Run workflow)
+# y también cuando subes cambios y todavía faltan las librerías.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['vendor/**']
+permissions:
+  contents: write
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar librerías que falten
+        run: |
+          mkdir -p vendor
+          get() { [ -s "vendor/$1" ] || curl -fsSL "$2" -o "vendor/$1"; }
+          get html2pdf.bundle.min.js https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js
+          get chart.umd.min.js https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js
+          get exceljs.min.js https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js
+          ls -la vendor
+      - name: Guardar en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor
+          git diff --cached --quiet || (git commit -m "Agregar librerías locales" && git push)

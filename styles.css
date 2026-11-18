@@ -795,3 +795,65 @@
     @media (prefers-reduced-motion: reduce) {
       .home-grid.play .home-card, .home-grid.play .hc-ico, .tab-enter { animation: none; }
     }
+
+/* ===== Selector de diseño de cotización ===== */
+.design-picker { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 4px; }
+.design-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 999px;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-weight: 700; font-size: 13px; }
+.design-chip i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
+.design-chip.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* ===== Tema Aventura: mar, cielo y mapa del tesoro (arte original) ===== */
+body.adventure {
+  --bg: #f3e2b3; --surface: #fff7df; --surface-2: #f6e8c3; --text: #3a2614; --muted: #8a6b45; --border: #e0c88f;
+  --primary: #4a2e14; --primary-hover: #6a4420; --accent: #d9482b;
+  --shadow: 0 12px 26px rgba(92, 56, 18, .20), 0 1px 0 rgba(255, 255, 255, .7) inset;
+  background:
+    radial-gradient(900px 420px at 80% -8%, rgba(255, 236, 150, .85), transparent 62%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .1 0 0 0 .10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #7fd0ec 0, #bfe8f4 14%, #f3e2b3 40%, #ecd49a 100%);
+  background-attachment: fixed;
+}
+body.adventure::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 130px; z-index: 0; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 130' preserveAspectRatio='none'%3E%3Cpath d='M0 62 Q75 30 150 62 T300 62 T450 62 T600 62 V130 H0Z' fill='%231f8fb8' fill-opacity='.28'/%3E%3Cpath d='M0 86 Q75 58 150 86 T300 86 T450 86 T600 86 V130 H0Z' fill='%231f8fb8' fill-opacity='.45'/%3E%3Cpath d='M0 108 Q75 86 150 108 T300 108 T450 108 T600 108 V130 H0Z' fill='%230e6aa6' fill-opacity='.6'/%3E%3C/svg%3E") repeat-x bottom / 600px 130px;
+  animation: waveMove 22s linear infinite;
+}
+@keyframes waveMove { to { background-position-x: 600px; } }
+body.adventure .app-shell { position: relative; z-index: 1; }
+
+body.adventure .topbar {
+  background: linear-gradient(160deg, #3fb9e4 0%, #1d86c4 55%, #0e5d9a 100%);
+  border-bottom: 3px solid #e8c066; box-shadow: 0 14px 30px rgba(14, 93, 154, .35);
+}
+body.adventure .card, body.adventure .home-card, body.adventure .modal-box {
+  background: linear-gradient(180deg, #fffaf0, #fbefd0);
+  border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+body.adventure .home-card { transition: transform .18s ease, box-shadow .18s ease; }
+body.adventure .home-card:hover { transform: translateY(-3px) rotate(-.4deg); box-shadow: 0 18px 30px rgba(92, 56, 18, .26); }
+body.adventure .home-card:active { transform: scale(.96); }
+body.adventure .hc-ico { box-shadow: 0 6px 12px rgba(0, 0, 0, .25), 0 -3px 0 rgba(0, 0, 0, .18) inset; }
+body.adventure .btn-primary {
+  background: linear-gradient(180deg, #e8603a, #bb3a1b); color: #fff; border: 0;
+  box-shadow: 0 4px 0 #8a2a12, 0 10px 16px rgba(120, 40, 15, .30);
+}
+body.adventure .btn-primary:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a2a12; }
+body.adventure .btn-light { background: #fbefd0; border: 1px solid var(--border); box-shadow: 0 3px 0 #dcc38a; color: var(--text); }
+body.adventure input, body.adventure select { background: #fffdf5; border-color: var(--border); color: var(--text); }
+body.adventure .page-heading h1 { text-shadow: 0 2px 0 rgba(255, 255, 255, .7); }
+body.adventure .footer-note { position: relative; z-index: 1; padding-bottom: 90px; }
+@media (prefers-reduced-motion: reduce) { body.adventure::before { animation: none; } }
+
+/* Prioridad sobre las reglas "body:not(.dark)" del tema claro */
+body.adventure:not(.dark) .card { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
+body.adventure:not(.dark) input:not([type=range]):not([type=color]), body.adventure:not(.dark) select,
+body.adventure:not(.dark) textarea, body.adventure:not(.dark) .select-button { background: #fffdf5; border: 1px solid var(--border); }
+body.adventure:not(.dark) .btn-primary, body.adventure:not(.dark) .btn-accent {
+  background: linear-gradient(180deg, #e8603a, #bb3a1b); color: #fff; box-shadow: 0 4px 0 #8a2a12, 0 10px 16px rgba(120, 40, 15, .30); }
+body.adventure:not(.dark) .btn-light { background: #fbefd0; color: var(--text); border: 1px solid var(--border); box-shadow: 0 3px 0 #dcc38a; }
+body.adventure:not(.dark) .page-heading h1 { color: #3a2614; }
+body.adventure:not(.dark) .section-label { color: #7a5a32; }
+
+/* La cotización exportada no hereda bordes del tema de la app */
+#pdfArea td, #pdfArea th { border: 0; }

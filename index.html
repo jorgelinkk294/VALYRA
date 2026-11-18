@@ -182,7 +182,7 @@
         <details class="actions-dropdown">
           <summary class="btn btn-primary">Opciones de cotizaci&#xF3;n&#x3000;&#x2304;</summary>
           <div class="action-menu">
-            <button class="btn btn-light" onclick="openPreview()">Revisar cotizaci&#xF3;n</button>
+            <button class="btn btn-light" onclick="openPreview()">Revisar y elegir dise&#xF1;o</button>
             <button class="btn btn-primary" onclick="exportPDF()">Exportar PDF</button>
             <button class="btn btn-green" onclick="exportPNG()">Exportar imagen (PNG)</button>
             <button class="btn btn-light" onclick="saveVenta()">Guardar cotizaci&#xF3;n</button>
@@ -504,6 +504,7 @@
 
 <div id="previewModal" class="modal" onclick="modalBackdrop(event, 'previewModal')">
   <div class="modal-box wide">
+    <div id="designPicker" class="design-picker"></div>
     <div id="livePreview"></div>
     <button class="btn btn-primary" onclick="exportPDF()">Exportar PDF</button>
     <button class="btn btn-green" onclick="exportPNG()">Exportar imagen (PNG)</button>
