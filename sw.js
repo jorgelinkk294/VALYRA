@@ -1,4 +1,4 @@
-const CACHE = 'valyra-4.1.0';
+const CACHE = 'valyra-4.1.1';
 const LOCAL = ['./', 'index.html', 'enhancements.js', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
 const REMOTE = [
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
@@ -35,7 +35,9 @@ function isAppPage(request) {
 async function addEnhancements(response) {
   if (!response || response.type === 'opaque') return response;
   const html = await response.text();
-  if (html.includes('enhancements.js')) return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+  if (html.includes('enhancements.js')) {
+    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+  }
   const updated = html.replace(/<\/body\s*>/i, '<script src="./enhancements.js"></script></body>');
   const headers = new Headers(response.headers);
   headers.delete('content-length');
@@ -67,8 +69,6 @@ self.addEventListener('fetch', event => {
   })());
 });
 
-// The standalone app performs its foreground update check; retain background
-// notifications for installed PWAs when periodic background sync is available.
 async function idbValue(key) {
   try {
     const db = await new Promise((resolve, reject) => {
@@ -79,7 +79,7 @@ async function idbValue(key) {
     });
     return await new Promise(resolve => {
       const request = db.transaction('kv').objectStore('kv').get(key);
-      request.onsuccess = () => resolve(request.result ?? null);
+      request.onsuccess = () => resolve(request.result == null ? null : request.result);
       request.onerror = () => resolve(null);
     });
   } catch (error) { return null; }
@@ -105,8 +105,7 @@ async function checkUpdateInBackground() {
     if (windows.some(client => client.visibilityState === 'visible')) return;
     const saved = await idbValue('__build');
     if (!saved || await currentBuildHash() === saved) return;
-    const registration = await self.registration;
-    await registration.showNotification('Actualización disponible', {
+    await self.registration.showNotification('Actualización disponible', {
       body: 'Hay una versión nueva de VALYRA. Abre la app para actualizar.',
       icon: 'icon-192.png', badge: 'icon-192.png', tag: 'valyra-update', renotify: true,
       data: { url: './' }
